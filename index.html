@@ -170,6 +170,7 @@
       <div class="spacer"></div>
       <button id="syncPull" title="Pull from GitHub">⤓ Pull</button>
       <button id="syncPush" title="Push to GitHub">⤒ Push</button>
+      <button id="catUpdate" title="Ask Claude to refresh dates, suggest series, or add one — opens a PR on GitHub">⚡ Catalog</button>
       <button id="syncSetup">⚙ Set up sync</button>
     </div>
   </header>
@@ -453,6 +454,46 @@ async function setupSync(){
     await pullNow(true); // adopt remote if newer
   }catch(e){setSync("err","Setup failed: "+e.message);}
 }
+/* ── Catalog updates via GitHub Action ─────────────────────────
+   The ⚡ Catalog button fires a repository_dispatch; a workflow
+   (.github/workflows/catalog-update.yml) runs Claude Code to edit
+   the SEED catalog and open a PR you review/merge. Needs a token
+   with 'repo' scope — kept separate from the gist token (which
+   stays minimal 'gist' scope) and stored per-device. ── */
+const REPO="ashomah/ronin-manga-reading-log";
+async function catalogDispatch(task,detail){
+  if(!sync.repoToken){
+    const t=prompt("Paste a GitHub token with 'repo' scope.\nThis lets the app ask Claude to update the catalog (it opens a PR you review).","");
+    if(t===null)return;
+    sync.repoToken=t.trim();
+    if(!sync.repoToken){setSync("","Catalog update cancelled.");return;}
+    saveSync();
+  }
+  try{
+    setSync("busy","Asking Claude to update the catalog…");
+    const r=await fetch("https://api.github.com/repos/"+REPO+"/dispatches",{
+      method:"POST",
+      headers:{"Accept":"application/vnd.github+json","Authorization":"Bearer "+sync.repoToken,
+        "X-GitHub-Api-Version":"2022-11-28","Content-Type":"application/json"},
+      body:JSON.stringify({event_type:"catalog-update",client_payload:{task,detail}})
+    });
+    if(r.status===204){setSync("ok","Requested ✓ — Claude is working. A PR will appear on GitHub in a few minutes.");}
+    else if(r.status===401||r.status===403){sync.repoToken="";saveSync();
+      setSync("err","Token rejected — it needs the 'repo' scope. Click ⚡ Catalog to re-enter it.");}
+    else if(r.status===404){setSync("err","Repo or workflow not found — is the catalog-update workflow committed to main?");}
+    else throw new Error("HTTP "+r.status);
+  }catch(e){setSync("err","Catalog request failed: "+e.message);}
+}
+function catalogMenu(){
+  const c=prompt("Catalog update — type a number:\n  1 · refresh release dates\n  2 · suggest new series for me\n  3 · add a specific series","1");
+  if(c===null)return;
+  const n=(c||"").trim();
+  if(n==="1")catalogDispatch("dates","");
+  else if(n==="2")catalogDispatch("suggest","");
+  else if(n==="3"){const name=prompt("Which series? (title, optionally with author)","");
+    if(name!==null&&name.trim())catalogDispatch("add",name.trim());}
+  else alert("Please pick 1, 2 or 3.");
+}
 function rec(id){const r=state[id]||(state[id]={ed:0,owned:0,read:0,img:"",rating:null,buy:false});if(r.read===undefined)r.read=0;if(r.rating===undefined)r.rating=null;if(r.buy===undefined)r.buy=false;return r}
 function curEd(m){return m.editions[rec(m.id).ed]||m.editions[0]}
 function owned(m){const r=rec(m.id);return r.owned ?? (m.status==="read"?curEd(m).vols:0)}
@@ -628,6 +669,7 @@ document.getElementById("reset").onclick=()=>{if(confirm("Reset everything?")){s
 document.getElementById("syncSetup").onclick=setupSync;
 document.getElementById("syncPush").onclick=pushNow;
 document.getElementById("syncPull").onclick=()=>pullNow(false);
+document.getElementById("catUpdate").onclick=catalogMenu;
 document.getElementById("restore").onclick=restoreBackup;
 // First-run seeding: pre-fill owned/read/rating from your real inventory
 (function seed(){

@@ -1,0 +1,87 @@
+name: Catalog update (Claude)
+
+# Triggered from the Rōnin app's "⚡ Catalog" button (repository_dispatch),
+# or manually from the Actions tab (workflow_dispatch). Runs Claude Code to
+# edit the SEED catalog in index.html and opens a PR for you to review/merge.
+# Merging to main redeploys GitHub Pages.
+
+on:
+  repository_dispatch:
+    types: [catalog-update]
+  workflow_dispatch:
+    inputs:
+      task:
+        description: "dates | suggest | add"
+        type: string
+        default: dates
+      detail:
+        description: "series name (only used for 'add')"
+        type: string
+        default: ""
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Build prompt
+        id: p
+        # User-controlled values go through env (never inlined into the shell)
+        # to avoid script injection.
+        env:
+          TASK: ${{ github.event.client_payload.task || github.event.inputs.task }}
+          DETAIL: ${{ github.event.client_payload.detail || github.event.inputs.detail }}
+        run: |
+          set -euo pipefail
+          base="You are editing the Rōnin manga tracker. Read CLAUDE.md first and follow it exactly. Only edit the SEED catalog inside index.html. Never change, rename or reuse existing series ids, and never touch the user-data shape, migrations, or seed IIFEs. Keep index.html a single valid file and sanity-check that the <script> still parses. Use single quotes inside JS string literals. Do NOT commit or push — just leave the edits in the working tree."
+          case "$TASK" in
+            dates)
+              task="TASK: Refresh release dates. For every SEED entry with verify:true, use WebSearch to find the current status of its French edition and update its nextDate string to match reality. Keep the existing wording style, and keep the ⚑ flag only if the date is still genuinely uncertain. Do not add or remove series." ;;
+            suggest)
+              task="TASK: Suggest new series. Propose 1 to 3 NEW section:'wishlist' entries that fit the reader's taste (seinen / sci-fi / cyberpunk / dark) and are not already in SEED. For each, research real French editions with WebSearch and give it a unique new id, full fields (t, a, g[], status:'todo', series, English blurb, art motif colours) and editions[] with name/vols/price/mins. Mark ongoing ones verify:true." ;;
+            add)
+              task="TASK: Add the series the user named: \"$DETAIL\". Research its French editions with WebSearch and add ONE new SEED entry: section 'wishlist' unless the user clearly already owns it, a unique new id, full fields and editions, an English blurb and art motif colours. Mark verify:true if it is ongoing." ;;
+            *)
+              echo "Unknown task: '$TASK'" >&2; exit 1 ;;
+          esac
+          printf '%s\n\n%s\n' "$base" "$task" > "$RUNNER_TEMP/prompt.txt"
+          echo "task=$TASK" >> "$GITHUB_OUTPUT"
+
+      - name: Run Claude
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          claude -p "$(cat "$RUNNER_TEMP/prompt.txt")" \
+            --dangerously-skip-permissions \
+            --max-turns 60
+
+      - name: Open pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: catalog/${{ steps.p.outputs.task }}-${{ github.run_id }}
+          delete-branch: true
+          title: "Catalog: ${{ steps.p.outputs.task }} update (Claude)"
+          commit-message: |
+            Catalog: ${{ steps.p.outputs.task }} update via app-triggered Claude run
+
+            Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+          body: |
+            Automated catalog update requested from the Rōnin app.
+
+            **Task:** `${{ steps.p.outputs.task }}`
+
+            Review the SEED changes below before merging. Merging to `main` redeploys GitHub Pages.
+
+            🤖 Generated with [Claude Code](https://claude.com/claude-code)
