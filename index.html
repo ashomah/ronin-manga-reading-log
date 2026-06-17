@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rōnin — manga reading log</title>
+<style>
+  :root{
+    --ink:#16140f; --washi:#e9e3d3; --washi-2:#f3eee1;
+    --cinnabar:#c0392b; --cinnabar-d:#8e2a20;
+    --jade:#3f6b5e; --gold:#b08d4f; --line:#4a443a; --muted:#6b6356;
+    --shadow:0 1px 0 rgba(0,0,0,.04), 0 12px 30px -18px rgba(20,18,14,.55);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:radial-gradient(120% 80% at 50% -10%, #efe9da 0%, var(--washi) 55%, #ddd5c2 100%) fixed;
+    color:var(--ink);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    line-height:1.5;-webkit-font-smoothing:antialiased;padding-bottom:64px;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+  header.mast{padding:38px 0 22px;position:relative}
+  .seal{position:absolute;top:30px;right:22px;width:64px;height:64px;border-radius:8px;
+    background:var(--cinnabar);color:var(--washi-2);display:grid;place-items:center;
+    font-family:"Hiragino Mincho ProN","Yu Mincho",serif;font-size:30px;font-weight:700;
+    box-shadow:inset 0 0 0 2px rgba(255,255,255,.25),var(--shadow);transform:rotate(-3deg)}
+  .kicker{font-family:ui-monospace,"SF Mono",Menlo,monospace;text-transform:uppercase;
+    letter-spacing:.32em;font-size:11px;color:var(--cinnabar-d);font-weight:600}
+  h1{font-size:clamp(34px,6vw,58px);line-height:.96;font-weight:800;letter-spacing:-1.5px;margin:6px 0 4px}
+  h1 em{font-style:italic;color:var(--muted);font-weight:500}
+  .sub{color:var(--muted);max-width:62ch;font-size:15px}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);
+    border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:26px 0 8px;box-shadow:var(--shadow)}
+  .stat{background:var(--washi-2);padding:16px 18px}
+  .stat .n{font-size:26px;font-weight:800;letter-spacing:-1px;line-height:1}
+  .stat .l{font-family:ui-monospace,monospace;font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);margin-top:6px}
+  .stat .n small{font-size:14px;font-weight:600;color:var(--muted)}
+  .syncbar{display:flex;align-items:center;gap:10px;margin-top:10px;padding:9px 14px;
+    background:var(--washi-2);border:1px solid var(--line);border-radius:10px;font-size:13px}
+  .syncbar .spacer{flex:1}
+  .syncbar .dot{width:9px;height:9px;border-radius:50%;background:var(--muted);flex:none;box-shadow:0 0 0 3px rgba(0,0,0,.04)}
+  .syncbar .dot.ok{background:var(--jade)}
+  .syncbar .dot.warn{background:var(--gold)}
+  .syncbar .dot.err{background:var(--cinnabar)}
+  .syncbar .dot.busy{background:var(--gold);animation:pulse 1s infinite}
+  @keyframes pulse{50%{opacity:.35}}
+  .syncbar .syncmsg{color:var(--muted);font-family:ui-monospace,monospace;font-size:11.5px;letter-spacing:.02em}
+  .syncbar button{font-family:ui-monospace,monospace;font-size:11px;border:1px solid var(--line);
+    background:var(--washi);padding:6px 11px;border-radius:7px;cursor:pointer;color:var(--ink)}
+  .syncbar button:hover{background:var(--ink);color:var(--washi)}
+  .started{margin-top:14px}
+  .started:empty{display:none}
+  .started-hd{font-family:ui-monospace,monospace;font-size:11px;text-transform:uppercase;letter-spacing:.18em;
+    color:var(--cinnabar-d);font-weight:700;margin-bottom:10px}
+  .started-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px 22px}
+  .srItem{display:flex;flex-direction:column;gap:5px}
+  .srTop{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .srName{font-size:14px;font-weight:700;letter-spacing:-.2px}
+  .srNum{font-family:ui-monospace,monospace;font-size:11px;color:var(--muted);white-space:nowrap}
+  .sbar{position:relative;height:6px;border-radius:999px;background:rgba(20,18,14,.08);overflow:hidden}
+  .sown{position:absolute;top:0;left:0;height:100%;background:rgba(176,141,79,.3);border-radius:999px}
+  .sfill{position:absolute;top:0;left:0;height:100%;background:var(--jade);border-radius:999px;z-index:1}
+  .started-key{display:flex;gap:16px;margin-top:10px;font-family:ui-monospace,monospace;font-size:10px;color:var(--muted)}
+  .started-key i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+  .started-key .k-read{background:var(--jade)}
+  .started-key .k-own{background:rgba(176,141,79,.5)}
+  @media (max-width:640px){.syncbar{flex-wrap:wrap}.syncbar .syncmsg{order:5;width:100%}}
+  .controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:24px 0 14px}
+  .chip{font-family:ui-monospace,monospace;font-size:12px;border:1px solid var(--line);
+    background:transparent;color:var(--ink);padding:7px 13px;border-radius:999px;cursor:pointer;transition:.15s}
+  .chip:hover{background:var(--washi-2)}
+  .chip.on{background:var(--ink);color:var(--washi);border-color:var(--ink)}
+  .spacer{flex:1}
+  .search{border:1px solid var(--line);background:var(--washi-2);border-radius:999px;
+    padding:7px 14px;font-family:inherit;font-size:14px;min-width:180px;color:var(--ink)}
+  .search:focus{outline:2px solid var(--cinnabar);outline-offset:1px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:18px;margin-top:8px}
+  .sechead{grid-column:1/-1;font-family:ui-monospace,monospace;font-size:13px;text-transform:uppercase;
+    letter-spacing:.2em;color:var(--cinnabar-d);font-weight:700;padding:14px 2px 2px;
+    border-bottom:1px solid var(--line);margin-bottom:2px}
+  .sechead:first-child{padding-top:0}
+  .card{background:var(--washi-2);border:1px solid var(--line);border-radius:14px;
+    box-shadow:var(--shadow);position:relative;display:flex;flex-direction:column;overflow:hidden}
+  /* cover motif */
+  .cover{height:150px;position:relative;display:flex;align-items:flex-end;padding:14px 16px;
+    background-size:cover;background-position:center;border-bottom:1px solid var(--line)}
+  .cover .scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.62))}
+  .cover .ct{position:relative;z-index:1;color:#fff}
+  .cover .ct h3{font-size:23px;line-height:1;letter-spacing:-.5px;font-weight:800;text-shadow:0 2px 12px rgba(0,0,0,.5)}
+  .cover .ct .author{font-size:12px;font-style:italic;opacity:.92;margin-top:3px;text-shadow:0 1px 6px rgba(0,0,0,.6)}
+  .cover .rank{position:absolute;top:12px;left:14px;z-index:1;background:var(--cinnabar);color:#fff;
+    font-family:ui-monospace,monospace;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px}
+  .cover .rank.read{background:var(--jade)}
+  .cover .imgbtn{position:absolute;top:12px;right:14px;z-index:1;background:rgba(0,0,0,.45);color:#fff;
+    border:1px solid rgba(255,255,255,.4);font-size:11px;padding:3px 8px;border-radius:6px;cursor:pointer;font-family:ui-monospace,monospace}
+  .body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:11px;flex:1}
+  .badges{display:flex;gap:5px;flex-wrap:wrap}
+  .b{font-family:ui-monospace,monospace;font-size:9.5px;text-transform:uppercase;letter-spacing:.1em;
+    padding:3px 7px;border-radius:5px;font-weight:600;white-space:nowrap}
+  .b.complete{background:rgba(63,107,94,.15);color:var(--jade);box-shadow:inset 0 0 0 1px rgba(63,107,94,.35)}
+  .b.ongoing{background:rgba(176,141,79,.16);color:#8a6d33;box-shadow:inset 0 0 0 1px rgba(176,141,79,.4)}
+  .b.genre{background:rgba(20,18,14,.06);color:var(--muted);box-shadow:inset 0 0 0 1px rgba(20,18,14,.12)}
+  .blurb{font-size:13.5px;color:#3c372d}
+  .rate{display:flex;align-items:center;gap:3px}
+  .rate .lab{font-family:ui-monospace,monospace;font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-right:4px}
+  .rate .star{cursor:pointer;font-size:18px;line-height:1;color:rgba(20,18,14,.22);transition:.1s;user-select:none}
+  .rate .star.on{color:var(--cinnabar)}
+  .rate .star:hover{transform:scale(1.15)}
+  .rate .clr{font-family:ui-monospace,monospace;font-size:10px;color:var(--muted);background:none;border:none;cursor:pointer;margin-left:4px;text-decoration:underline}
+  /* edition picker */
+  .edsel{display:flex;flex-direction:column;gap:5px}
+  .edsel label{font-family:ui-monospace,monospace;font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
+  .edsel select{font-family:inherit;font-size:13px;padding:7px 10px;border-radius:8px;
+    border:1px solid var(--line);background:var(--washi);color:var(--ink);width:100%}
+  .ednote{font-size:11.5px;color:var(--cinnabar-d);font-style:italic;border-left:2px solid var(--cinnabar);padding-left:9px}
+  .bestrec{font-size:11.5px;font-family:ui-monospace,monospace;color:#8a6d33;background:rgba(176,141,79,.12);
+    border:1px solid rgba(176,141,79,.35);border-radius:7px;padding:6px 10px;letter-spacing:.02em}
+  .bestrec.own{color:var(--jade);background:rgba(63,107,94,.1);border-color:rgba(63,107,94,.3)}
+  .buytick{display:flex;align-items:center;gap:8px;cursor:pointer;font-family:ui-monospace,monospace;
+    font-size:12px;color:var(--muted);padding:7px 10px;border:1px dashed var(--line);border-radius:8px}
+  .buytick input{width:16px;height:16px;accent-color:var(--cinnabar);cursor:pointer}
+  .buytick:hover{border-color:var(--cinnabar)}
+  .card.onlist{box-shadow:inset 3px 0 0 var(--cinnabar), var(--shadow)}
+  .card.onlist .buytick{color:var(--cinnabar-d);border-style:solid;border-color:rgba(192,57,43,.4);background:rgba(192,57,43,.06)}
+  .meta{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;font-size:12.5px;border-top:1px dashed var(--line);padding-top:11px}
+  .meta div{display:flex;justify-content:space-between;gap:8px}
+  .meta .k{color:var(--muted);font-family:ui-monospace,monospace;font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+  .meta .v{font-weight:700;text-align:right}
+  .rel{font-size:12px;display:flex;justify-content:space-between;align-items:center;
+    background:rgba(176,141,79,.12);border:1px solid rgba(176,141,79,.35);border-radius:8px;padding:7px 10px}
+  .rel .lab{font-family:ui-monospace,monospace;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#8a6d33}
+  .rel .val{font-weight:700}
+  .prog .bar{height:8px;border-radius:999px;background:rgba(20,18,14,.1);overflow:hidden;box-shadow:inset 0 0 0 1px rgba(20,18,14,.08)}
+  .prog .fill{height:100%;border-radius:999px;transition:width .35s}
+  .prog .fill.own{background:linear-gradient(90deg,var(--gold),var(--cinnabar))}
+  .prog .fill.rd{background:linear-gradient(90deg,#5a8c7c,var(--jade))}
+  .prog.readblock{margin-top:2px;padding-top:9px;border-top:1px dotted rgba(74,68,58,.4)}
+  .seriesprog{margin-top:9px}
+  .seriesprog .srow{display:flex;justify-content:space-between;font-size:10.5px;margin-bottom:4px;
+    color:var(--muted);font-family:ui-monospace,monospace;letter-spacing:.03em}
+  .seriesprog .sbar{position:relative;height:5px;border-radius:999px;background:rgba(20,18,14,.08);overflow:hidden}
+  .seriesprog .sown{position:absolute;top:0;left:0;height:100%;background:rgba(176,141,79,.30);border-radius:999px}
+  .seriesprog .sfill{position:absolute;top:0;left:0;height:100%;background:var(--jade);border-radius:999px;z-index:1}
+  .prog .row{display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:5px;color:var(--muted);font-family:ui-monospace,monospace}
+  .ctr{display:flex;gap:6px;align-items:center;margin-top:9px}
+  .ctr button{border:1px solid var(--line);background:var(--washi);width:30px;height:30px;border-radius:8px;font-size:17px;cursor:pointer;line-height:1;color:var(--ink);transition:.12s}
+  .ctr button:hover{background:var(--ink);color:var(--washi)}
+  .ctr .owned{font-family:ui-monospace,monospace;font-size:12px;color:var(--muted);flex:1}
+  .ctr .done{margin-left:auto;font-family:ui-monospace,monospace;font-size:11px;font-weight:700}
+  footer{margin-top:40px;text-align:center;color:var(--muted);font-size:12px;line-height:1.7}
+  .io{display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+  .io button{font-family:ui-monospace,monospace;font-size:12px;border:1px solid var(--line);background:var(--washi-2);padding:8px 14px;border-radius:8px;cursor:pointer;color:var(--ink)}
+  .io button:hover{background:var(--ink);color:var(--washi)}
+  @media (max-width:640px){.stats{grid-template-columns:repeat(2,1fr)}.seal{width:50px;height:50px;font-size:24px;top:34px}}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="mast">
+    <div class="seal">読</div>
+    <div class="kicker">Reading log · seinen &amp; science fiction</div>
+    <h1>Rōnin <em>— your path through manga</em></h1>
+    <p class="sub">Pick the edition you own for each series — price, volume count and release tracking adjust automatically. Dates marked ⚑ still need a live check.</p>
+    <div class="stats" id="stats"></div>
+    <div class="syncbar" id="syncbar">
+      <span class="dot" id="syncdot"></span>
+      <span class="syncmsg" id="syncmsg">Sync not set up — local data only</span>
+      <div class="spacer"></div>
+      <button id="syncPull" title="Pull from GitHub">⤓ Pull</button>
+      <button id="syncPush" title="Push to GitHub">⤒ Push</button>
+      <button id="syncSetup">⚙ Set up sync</button>
+    </div>
+  </header>
+  <div class="started" id="started"></div>
+  <div class="controls" id="controls">
+    <button class="chip on" data-f="all">All</button>
+    <button class="chip" data-f="shelf">📚 My collection</button>
+    <button class="chip" data-f="wishlist">✧ Suggestions</button>
+    <button class="chip" data-f="buylist">🛒 Buy list</button>
+    <button class="chip" data-f="todo">To read</button>
+    <button class="chip" data-f="reading">Reading</button>
+    <button class="chip" data-f="read">Read</button>
+    <button class="chip" data-f="ongoing">Ongoing series</button>
+    <button class="chip" data-f="complete">Completed series</button>
+    <div class="spacer"></div>
+    <input class="search" id="search" placeholder="Search…">
+  </div>
+  <div class="grid" id="grid"></div>
+  <footer>
+    <b>Where is my data?</b> Your progress and edition choices are saved in your browser's local storage (not in the file itself).<br>
+    Export to JSON now and then to keep a portable backup.
+    <div class="io">
+      <button id="export">⬇ Export (JSON)</button>
+      <button id="import">⬆ Import</button>
+      <button id="reset">↺ Reset</button>
+      <button id="restore" title="Undo the last schema migration">⟲ Restore (pre-migration)</button>
+      <input type="file" id="file" accept="application/json" hidden>
+    </div>
+  </footer>
+</div>
+<script>
+/* ── Editions: each title has 1+ editions. Marked verify:true where
+   the publication date / volume count should be re-checked live.
+   `art` = palette for the generated cover motif (no copyrighted art). ── */
+const SEED=[
+ // ═══════════════ MY COLLECTION (what you own) ═══════════════
+ {id:"db",section:"shelf",t:"Dragon Ball",a:"Akira Toriyama",g:["shōnen","aventure"],status:"read",series:"complete",
+  blurb:"The cornerstone of shōnen. You read it in digital colour — a print set would be a nice move to the physical object.",art:["#d98324","#1a1410"],
+  editions:[
+   {name:"Digital colour edition (jpeg), FR",vols:8,price:0,mins:90,note:"Your current version: read online, colourised."},
+   {name:"Original edition, 42 vols — Glénat",vols:42,price:7,mins:75,recommended:true,note:"The reference print format, B&W, Japanese reading order."},
+   {name:"Perfect Edition, 34 vols — Glénat",vols:34,price:10.55,mins:95,note:"A5 large format, Toriyama covers, colour pages."},
+   {name:"Colour print edition — Glénat",vols:0,price:0,mins:90,note:"Sold by arc (Sangoku, Freezer…), colourised, pricier."}
+  ]},
+ {id:"gits",section:"shelf",t:"Ghost in the Shell",a:"Masamune Shirow",g:["cyberpunk","sf"],status:"read",series:"complete",
+  blurb:"Cyborgs, consciousness, networks. You own the complete English 2nd edition (3 volumes).",art:["#2e6f8e","#0d1418"],
+  editions:[
+   {name:"2nd Edition (Kodansha, EN) — 3 vol.",vols:3,price:18,mins:130,recommended:true,note:"Your version. Vol.1 ISBN: 978-1593072285. The most complete in English."},
+   {name:"Perfect Edition — Glénat (FR)",vols:3,price:15,mins:130,note:"French equivalent, restored colour plates."}
+  ]},
+ {id:"gantz",section:"shelf",t:"Gantz",a:"Hiroya Oku",g:["sf","horreur","seinen"],status:"reading",series:"complete",
+  blurb:"Violence, sex, aliens, a black sphere. Brutal and addictive.",art:["#1a1a1a","#000"],
+  editions:[
+   {name:"Perfect Edition — Delcourt/Tonkam (FR)",vols:24,price:13,mins:150,recommended:true,note:"Your version. Double-volume large format, uncensored and complete."},
+   {name:"Standard edition, 37 vols — Delcourt/Tonkam",vols:37,price:9,mins:90,note:"Older pocket format."}
+  ]},
+ {id:"blame",section:"shelf",t:"Blame!",a:"Tsutomu Nihei",g:["cyberpunk","sf","seinen"],status:"reading",series:"complete",
+  blurb:"An endless megastructure, almost wordless. Pure architectural vertigo.",art:["#3a4a52","#08080a"],
+  editions:[
+   {name:"Master Edition (large books) — Glénat",vols:6,price:18,mins:90,recommended:true,note:"Your version. Large format is THE way to read Nihei."},
+   {name:"Original edition, 10 vols — Glénat",vols:10,price:7,mins:55,note:"Small format, out of print / secondhand."}
+  ]},
+ {id:"onepiece",section:"shelf",t:"One Piece",a:"Eiichirō Oda",g:["shōnen","aventure"],status:"reading",series:"ongoing",verify:true,
+  blurb:"The sprawling pirate epic. You're just starting (1 vol) — the longest road in your collection.",art:["#c0392b","#10243a"],
+  nextDate:"Ongoing — vol.113 on 23 Sep 2026 (~150 vols targeted by ~2028)",
+  editions:[
+   {name:"Original edition (classic format) — Glénat",vols:112,price:7.20,mins:75,recommended:true,note:"Your version. 112 vols out, Japanese order, revised translation."}
+  ]},
+ {id:"akira",section:"shelf",t:"Akira",a:"Katsuhiro Ōtomo",g:["cyberpunk","sf"],status:"read",series:"complete",
+  blurb:"The big bang of cyberpunk. You've read it all, in large format.",art:["#c0392b","#1a1410"],
+  editions:[
+   {name:"B&W 'original ed.' large books — Glénat",vols:6,price:14.95,mins:200,recommended:true,note:"Your version. Ōtomo-approved, Japanese order. The reference."},
+   {name:"B&W 6 vols (old, Western order) — Glénat",vols:6,price:13,mins:200,note:"Mirrored artwork."},
+   {name:"Colour, 14 vols — Glénat",vols:14,price:13,mins:90,note:"Colourised for the US market, smaller format."}
+  ]},
+ {id:"fma",section:"shelf",t:"Fullmetal Alchemist",a:"Hiromu Arakawa",g:["shōnen","aventure"],status:"todo",series:"complete",
+  blurb:"Alchemy, grief, a military state. Near-perfect construction. (On your wishlist.)",art:["#b08d4f","#161a14"],
+  editions:[
+   {name:"Perfect Edition, 18 vols — Kurokawa",vols:18,price:11.95,mins:120,recommended:true,note:"THE version to get: A5, colour pages, revised translation. ~€215."},
+   {name:"Standard edition, 27 vols — Kurokawa",vols:27,price:7.30,mins:80,note:"Pocket format, cheaper (~€197) but without the colour pages."}
+  ]},
+ {id:"berserk",section:"shelf",t:"Berserk",a:"Kentarō Miura",g:["dark fantasy","seinen"],status:"reading",series:"ongoing",verify:true,
+  blurb:"The ultimate dark fantasy. You own all 42 and are one volume from the current edge.",art:["#7a1f15","#0a0a0a"],
+  nextDate:"Ongoing — continued by Studio Gaga after Miura's death (2021); slow release ⚑",
+  editions:[
+   {name:"Classic edition — Glénat",vols:42,price:8,mins:130,recommended:true,note:"Your version. Standard French format."},
+   {name:"Deluxe (large format) — Glénat",vols:14,price:25,mins:390,note:"3-in-1 hardcovers, large format. Pricey but gorgeous."}
+  ]},
+
+ // ═══════════════ SUGGESTIONS / WISHLIST ═══════════════
+ {id:"dbsuper",section:"wishlist",t:"Dragon Ball Super",a:"Toyotarō / Toriyama",g:["shōnen","aventure"],status:"todo",series:"ongoing",verify:true,
+  blurb:"The official Dragon Ball sequel: gods of destruction, parallel universes. Your 'next DB series' wish.",art:["#2e6f9e","#10141a"],
+  nextDate:"On pause — 24 vols out in Japan; ~23 in France",
+  editions:[
+   {name:"Standard edition — Glénat (FR)",vols:23,price:7,mins:75,recommended:true,note:"Classic format. Publication currently on pause."}
+  ]},
+ {id:"naruto",section:"wishlist",t:"Naruto",a:"Masashi Kishimoto",g:["shōnen","aventure"],status:"todo",series:"complete",
+  blurb:"Ninjas, rivalries, perseverance. A shōnen pillar, completed. Your wish.",art:["#d9821f","#161008"],
+  editions:[
+   {name:"Original edition, 72 vols — Kana",vols:72,price:6.85,mins:75,recommended:true,note:"Complete in 72 volumes. ~€493."},
+   {name:"Collector / Hokage edition — Kana",vols:0,price:0,mins:75,note:"Premium reissues by arc, pricier."}
+  ]},
+ {id:"vagabond",section:"wishlist",t:"Vagabond",a:"Takehiko Inoue",g:["seinen","historique"],status:"todo",series:"ongoing",verify:true,
+  blurb:"Musashi, the sword, the ink. Perhaps the finest art in the medium.",art:["#1f4538","#0a0f0c"],
+  nextDate:"On pause since 2015 ⚑",
+  editions:[
+   {name:"Standard edition, 37 vols — Delcourt/Tonkam",vols:37,price:8,mins:95,recommended:true,note:"Best value. Series on pause."},
+   {name:"Découverte edition (2-in-1) — Tonkam",vols:19,price:11,mins:190,note:"Nicer format, double volumes."}
+  ]},
+ {id:"vinland",section:"wishlist",t:"Vinland Saga",a:"Makoto Yukimura",g:["seinen","historique"],status:"todo",series:"complete",
+  blurb:"Vikings, revenge then a quest for peace. By the author of Planetes.",art:["#2e5a6e","#0c1216"],
+  nextDate:"Completed — final vol.29: 13 May 2026",
+  editions:[{name:"Standard edition, 29 vols — Kurokawa",vols:29,price:7.65,mins:90,recommended:true,note:"Completed series."}]},
+ {id:"monster",section:"wishlist",t:"Monster",a:"Naoki Urasawa",g:["thriller","seinen"],status:"todo",series:"complete",
+  blurb:"A flawless psychological thriller. A surgeon, a killer, post-GDR Europe.",art:["#4a4036","#0e0c0a"],
+  editions:[
+   {name:"Deluxe, 9 vols — Kana",vols:9,price:18,mins:160,recommended:true,note:"Reference version, large format."},
+   {name:"Standard edition, 18 vols — Kana",vols:18,price:8,mins:80,note:"Older edition."}
+  ]},
+ {id:"pluto",section:"wishlist",t:"Pluto",a:"Naoki Urasawa",g:["sf","thriller","seinen"],status:"todo",series:"complete",
+  blurb:"SF, robots, identity. Short, dense, masterful. Ideal after GITS.",art:["#3a5a6e","#0c1014"],
+  editions:[{name:"Standard edition, 8 vols — Kana",vols:8,price:9,mins:85,recommended:true}]},
+ {id:"blameprequel",section:"wishlist",t:"Biomega / NOiSE",a:"Tsutomu Nihei",g:["cyberpunk","sf","seinen"],status:"todo",series:"complete",
+  blurb:"If Blame! gripped you: more Nihei, same industrial vertigo. NOiSE is the Blame! prequel.",art:["#3a4a52","#08080a"],
+  editions:[{name:"Glénat (FR)",vols:6,price:8,mins:70,recommended:true,note:"Biomega 6 vols; NOiSE 1 vol (Blame! prequel)."}]},
+ {id:"dorohedoro",section:"wishlist",t:"Dorohedoro",a:"Q Hayashida",g:["dark fantasy","sf","seinen"],status:"todo",series:"complete",
+  blurb:"Sorcerers, lizard heads, smoke. Weird, funny, ultra-stylish.",art:["#4a5a2e","#0e1208"],
+  editions:[{name:"23-vol edition — Soleil Manga",vols:23,price:8,mins:80,recommended:true}]},
+ {id:"bladeimmortal",section:"wishlist",t:"L'Habitant de l'infini",a:"Hiroaki Samura",g:["historique","seinen"],status:"todo",series:"complete",
+  blurb:"An immortal samurai, blood, incredible linework. Violent and beautiful.",art:["#5a4a3a","#100c0a"],
+  editions:[
+   {name:"Deluxe (large format) — Casterman",vols:15,price:18,mins:180,recommended:true,note:"Double volumes, Japanese reading order."},
+   {name:"Standard edition, ~30 vols — Casterman/Sakka",vols:30,price:8,mins:90,note:"Older, some in Western reading order."}
+  ]}
+];
+// Keep shelf section first (stable), suggestions after — for grouped headers
+SEED.forEach((m,i)=>m.__ord=i);
+SEED.sort((a,b)=>{const as=a.section==="shelf"?0:1,bs=b.section==="shelf"?0:1;return as-bs||a.__ord-b.__ord;});
+
+const KEY="ronin_manga_v2";
+const SYNC_KEY="ronin_sync_cfg";   // {token, gistId} — per device, never in the file
+
+/* ── Schema & migrations ──────────────────────────────────────
+   CURRENT_SCHEMA is the version this code expects. Data carries
+   __schema. migrate() runs ordered steps to bring any older data
+   up to the current shape, and snapshots a reversible backup
+   (in localStorage) before changing anything.
+
+   To evolve the model later:
+     1. bump CURRENT_SCHEMA
+     2. add a MIGRATIONS[n] function that turns vN-1 data into vN
+   Old gists/local data then self-upgrade on next open.       ── */
+const CURRENT_SCHEMA=2;
+const MIGRATIONS={
+  // v1 → v2: add a 1–5 personal rating field (null = unrated)
+  2:(d)=>{ for(const k in d){ if(k.startsWith("__"))continue;
+            if(d[k] && typeof d[k]==="object") d[k].rating = d[k].rating ?? null; }
+          return d; },
+};
+const BACKUP_KEY="ronin_manga_backup"; // pre-migration snapshot (reversible)
+
+function migrate(data){
+  if(!data||typeof data!=="object")return {__schema:CURRENT_SCHEMA};
+  let from = data.__schema ?? (Object.keys(data).some(k=>!k.startsWith("__"))?1:CURRENT_SCHEMA);
+  if(from===CURRENT_SCHEMA){data.__schema=CURRENT_SCHEMA;return data;}
+  if(from>CURRENT_SCHEMA){
+    // Data is newer than this code (an old device opening new data).
+    console.warn("Data is newer than this app (schema "+from+" > "+CURRENT_SCHEMA+").");
+    return data; // don't downgrade; read defensively elsewhere
+  }
+  // snapshot before mutating — reversible if a migration misbehaves
+  try{localStorage.setItem(BACKUP_KEY,JSON.stringify({at:Date.now(),from,data}));}catch(e){}
+  let d=JSON.parse(JSON.stringify(data)); // work on a copy
+  for(let v=from+1; v<=CURRENT_SCHEMA; v++){
+    if(typeof MIGRATIONS[v]==="function"){
+      try{d=MIGRATIONS[v](d);}
+      catch(e){console.error("Migration "+v+" failed:",e);return data;/* keep original on failure */}
+    }
+    d.__schema=v;
+  }
+  return d;
+}
+function restoreBackup(){
+  try{
+    const b=JSON.parse(localStorage.getItem(BACKUP_KEY));
+    if(!b){alert("No migration backup available.");return;}
+    if(confirm("Restore data from before the last migration (schema "+b.from+", "+new Date(b.at).toLocaleString()+")?")){
+      state=b.data;localStorage.setItem(KEY,JSON.stringify(state));render();
+      setSync("warn","Pre-migration backup restored.");
+    }
+  }catch(e){alert("Restore failed.");}
+}
+
+let state=migrate(load());
+function load(){try{return JSON.parse(localStorage.getItem(KEY))||{}}catch(e){return{}}}
+function save(){state.__schema=CURRENT_SCHEMA;state.__updatedAt=Date.now();localStorage.setItem(KEY,JSON.stringify(state));schedulePush()}
+
+/* ── GitHub Gist sync ─────────────────────────────────────────
+   One private gist holds a single file (ronin-data.json).
+   Token (classic, `gist` scope) + gistId live in localStorage,
+   so they travel per-device and never get baked into the HTML. ── */
+const GIST_FILE="ronin-data.json";
+let sync=loadSync();
+function loadSync(){try{return JSON.parse(localStorage.getItem(SYNC_KEY))||{}}catch(e){return{}}}
+function saveSync(){localStorage.setItem(SYNC_KEY,JSON.stringify(sync))}
+function gh(path,opts={}){
+  return fetch("https://api.github.com"+path,{...opts,headers:{
+    "Accept":"application/vnd.github+json",
+    "Authorization":"Bearer "+sync.token,
+    "X-GitHub-Api-Version":"2022-11-28",
+    ...(opts.body?{"Content-Type":"application/json"}:{})
+  }});
+}
+function setSync(state_,msg){
+  const dot=document.getElementById("syncdot"),m=document.getElementById("syncmsg");
+  dot.className="dot "+state_; m.textContent=msg;
+}
+let pushTimer=null;
+function schedulePush(){
+  if(!sync.token||!sync.gistId)return;
+  clearTimeout(pushTimer);
+  setSync("warn","Local changes not synced yet…");
+  pushTimer=setTimeout(pushNow,1500); // debounce
+}
+async function pushNow(){
+  if(!sync.token||!sync.gistId){setSync("","Sync not set up — local data only");return;}
+  try{
+    setSync("busy","Pushing to GitHub…");
+    const r=await gh("/gists/"+sync.gistId,{method:"PATCH",body:JSON.stringify({
+      files:{[GIST_FILE]:{content:JSON.stringify(state,null,2)}}
+    })});
+    if(!r.ok)throw new Error("HTTP "+r.status);
+    setSync("ok","Up to date · "+new Date().toLocaleTimeString());
+  }catch(e){setSync("err","Push failed: "+e.message);}
+}
+async function pullNow(silent){
+  if(!sync.token||!sync.gistId){if(!silent)alert("Set up sync first.");return;}
+  try{
+    setSync("busy","Pulling from GitHub…");
+    const r=await gh("/gists/"+sync.gistId);
+    if(!r.ok)throw new Error("HTTP "+r.status);
+    const g=await r.json();
+    const raw=g.files?.[GIST_FILE]?.content;
+    if(!raw){setSync("warn","Gist empty — push your data.");return;}
+    const remote=migrate(JSON.parse(raw));
+    const localT=state.__updatedAt||0, remoteT=remote.__updatedAt||0;
+    if(remoteT>localT || silent && !state.__seeded){
+      state=remote;localStorage.setItem(KEY,JSON.stringify(state));render();
+      setSync("ok","Data pulled · "+new Date().toLocaleTimeString());
+    }else if(localT>remoteT){
+      setSync("warn","Local copy is newer — remember to push.");
+    }else{setSync("ok","Already up to date.");}
+  }catch(e){setSync("err","Pull failed: "+e.message);}
+}
+async function setupSync(){
+  const tok=prompt("Paste your GitHub token (classic, 'gist' scope only):",sync.token||"");
+  if(tok===null)return;
+  sync.token=tok.trim();
+  if(!sync.token){saveSync();setSync("","Sync disabled.");return;}
+  // find existing ronin gist or create one
+  try{
+    setSync("busy","Checking token…");
+    let gid=sync.gistId;
+    if(!gid){
+      const list=await gh("/gists?per_page=100");
+      if(!list.ok)throw new Error("invalid token (HTTP "+list.status+")");
+      const arr=await list.json();
+      const found=arr.find(g=>g.files&&g.files[GIST_FILE]);
+      if(found)gid=found.id;
+    }
+    if(!gid){
+      const cr=await gh("/gists",{method:"POST",body:JSON.stringify({
+        description:"Rōnin — carnet de lecture manga (données)",public:false,
+        files:{[GIST_FILE]:{content:JSON.stringify(state,null,2)}}
+      })});
+      if(!cr.ok)throw new Error("gist creation failed (HTTP "+cr.status+")");
+      gid=(await cr.json()).id;
+    }
+    sync.gistId=gid;saveSync();
+    setSync("ok","Sync set up ✓");
+    await pullNow(true); // adopt remote if newer
+  }catch(e){setSync("err","Setup failed: "+e.message);}
+}
+function rec(id){const r=state[id]||(state[id]={ed:0,owned:0,read:0,img:"",rating:null,buy:false});if(r.read===undefined)r.read=0;if(r.rating===undefined)r.rating=null;if(r.buy===undefined)r.buy=false;return r}
+function curEd(m){return m.editions[rec(m.id).ed]||m.editions[0]}
+function owned(m){const r=rec(m.id);return r.owned ?? (m.status==="read"?curEd(m).vols:0)}
+function read(m){return Math.min(rec(m.id).read||0, owned(m))}
+
+let filter="all",q="";
+function matches(m){
+  if(q){if(!(m.t+" "+m.a).toLowerCase().includes(q))return false}
+  if(filter==="all")return true;
+  if(filter==="shelf")return m.section==="shelf";
+  if(filter==="wishlist")return m.section!=="shelf";
+  if(filter==="buylist")return rec(m.id).buy;
+  if(filter==="ongoing")return m.series==="ongoing";
+  if(filter==="complete")return m.series==="complete";
+  return m.status===filter;
+}
+function fmtH(mins){const h=mins/60;return h>=10?Math.round(h):h.toFixed(1)}
+function coverBg(m){
+  const[a,b]=m.art;
+  // generated motif: diagonal ink gradient + faux halftone, no copyrighted art
+  return `linear-gradient(135deg, ${a} 0%, ${b} 78%), radial-gradient(circle at 80% 20%, rgba(255,255,255,.18), transparent 40%)`;
+}
+
+function render(){
+  const grid=document.getElementById("grid");
+  const list=SEED.filter(matches);
+  const showHeaders = (filter==="all" && !q);
+  let lastSection=null;
+  grid.innerHTML=list.map(m=>{
+    let header="";
+    if(showHeaders){
+      const sec = m.section==="shelf" ? "shelf" : "wishlist";
+      if(sec!==lastSection){
+        lastSection=sec;
+        header = `<div class="sechead">${sec==="shelf"?"📚 My collection":"✧ Suggestions to explore"}</div>`;
+      }
+    }
+    const r=rec(m.id),ed=curEd(m),ow=owned(m),rd=read(m);
+    const ownPct=ed.vols?Math.round(ow/ed.vols*100):0;
+    const readPct=ed.vols?Math.round(rd/ed.vols*100):0;
+    const leftToBuy=(ed.vols-ow)*ed.price;
+    const leftToReadH=fmtH((ow-rd)*ed.mins);
+    const isRead=m.status==="read";
+    const rankIdx=SEED.indexOf(m)+1;
+    const bg = r.img ? `url('${r.img}')` : coverBg(m);
+    return header+`<div class="card${r.buy?' onlist':''}">
+      <div class="cover" style="background-image:${bg}">
+        <div class="scrim"></div>
+        <div class="rank ${isRead?'read':''}">${isRead?'✓ READ':'#'+rankIdx}</div>
+        <button class="imgbtn" onclick="setImg('${m.id}')">🖼 image</button>
+        <div class="ct"><h3>${m.t}</h3><div class="author">${m.a}</div></div>
+      </div>
+      <div class="body">
+        <div class="badges">
+          <span class="b ${m.series}">${m.series==="complete"?"completed":"⚑ ongoing"}</span>
+          ${m.g.map(x=>`<span class="b genre">${x}</span>`).join("")}
+        </div>
+        <div class="blurb">${m.blurb}</div>
+        <div class="rate">
+          <span class="lab">My rating</span>
+          ${[1,2,3,4,5].map(n=>`<span class="star ${ (r.rating||0)>=n ? 'on':''}" onclick="setRating('${m.id}',${n})">★</span>`).join("")}
+          ${r.rating?`<button class="clr" onclick="setRating('${m.id}',null)">clear</button>`:""}
+        </div>
+        <label class="buytick">
+          <input type="checkbox" ${r.buy?'checked':''} onchange="toggleBuy('${m.id}')">
+          <span>🛒 On my buy list${r.buy?` · ${(((ed.vols-ow)*ed.price)).toFixed(0)} € to complete`:""}</span>
+        </label>
+        <div class="edsel">
+          <label>Edition owned</label>
+          <select onchange="setEd('${m.id}',this.selectedIndex)">
+            ${m.editions.map((e,i)=>`<option ${i===r.ed?'selected':''}>${e.recommended?'★ ':''}${e.name} · ${e.vols} vols · ${e.price}€</option>`).join("")}
+          </select>
+        </div>
+        ${(()=>{const recE=m.editions.find(e=>e.recommended);const owE=curEd(m);
+          if(recE&&recE!==owE)return `<div class="bestrec">★ Recommended: ${recE.name} (${recE.vols} vols, ${recE.price}€)</div>`;
+          if(recE&&recE===owE)return `<div class="bestrec own">★ You own the recommended edition</div>`;return "";})()}
+        ${ed.note?`<div class="ednote">${ed.note}</div>`:""}
+        ${m.nextDate?`<div class="rel"><span class="lab">Next volume / status</span><span class="val">${m.nextDate}</span></div>`:""}
+
+        <div class="prog">
+          <div class="row"><span>Owned · ${ow}/${ed.vols}</span><span>${ownPct}%</span></div>
+          <div class="bar"><div class="fill own" style="width:${ownPct}%"></div></div>
+          <div class="ctr">
+            <button onclick="setOwned('${m.id}',${ow-1})">–</button>
+            <button onclick="setOwned('${m.id}',${ow+1})">+</button>
+            <span class="owned">${ow} owned</span>
+            ${ownPct>=100?'<span class="done" style="color:var(--jade)">complete ✓</span>':`<span class="done" style="color:var(--muted)">${leftToBuy.toFixed(0)} € to complete</span>`}
+          </div>
+        </div>
+
+        <div class="prog readblock">
+          <div class="row"><span>Read · ${rd}/${ow} owned</span><span>${ow?Math.round(rd/ow*100):0}%</span></div>
+          <div class="bar"><div class="fill rd" style="width:${ow?Math.round(rd/ow*100):0}%"></div></div>
+          <div class="ctr">
+            <button onclick="setRead('${m.id}',${rd-1})">–</button>
+            <button onclick="setRead('${m.id}',${rd+1})">+</button>
+            <span class="owned">${rd} read</span>
+            ${ow>0&&rd>=ow?(rd>=ed.vols?'<span class="done" style="color:var(--jade)">finished ✓</span>':'<span class="done" style="color:var(--jade)">caught up ✓</span>'):`<span class="done" style="color:var(--muted)">${leftToReadH} h on shelf</span>`}
+          </div>
+          <div class="seriesprog">
+            <div class="srow"><span>Series journey · ${rd}/${ed.vols}${m.series==="ongoing"?"+":""}</span><span>${ed.vols?Math.round(rd/ed.vols*100):0}%${m.series==="ongoing"?" so far":""}</span></div>
+            <div class="sbar"><div class="sfill" style="width:${ed.vols?Math.round(rd/ed.vols*100):0}%"></div><div class="sown" style="width:${ed.vols?Math.round(ow/ed.vols*100):0}%"></div></div>
+          </div>
+        </div>
+
+        <div class="meta">
+          <div><span class="k">Volumes</span><span class="v">${ed.vols}</span></div>
+          <div><span class="k">€ / vol</span><span class="v">${ed.price} €</span></div>
+          <div><span class="k">Full cost</span><span class="v">${(ed.vols*ed.price).toFixed(0)} €</span></div>
+          <div><span class="k">Full time</span><span class="v">${fmtH(ed.vols*ed.mins)} h</span></div>
+        </div>
+      </div>
+    </div>`;
+  }).join("")||`<p style="color:var(--muted);font-style:italic">No titles.</p>`;
+  renderStats();
+}
+function renderStats(){
+  let ov=0,rv=0,collValue=0,readHours=0,buyBudget=0,buyCount=0;
+  SEED.forEach(m=>{const r=rec(m.id),ed=curEd(m),ow=owned(m),rd=read(m);
+    ov+=ow;rv+=rd;
+    collValue+=ow*ed.price;              // value of volumes you own
+    readHours+=rd*ed.mins;               // time spent on volumes you've read
+    if(r.buy){                           // only buy-list series count toward budget
+      buyBudget+=Math.max(0,(ed.vols-ow)*ed.price); // full target − what you own
+      buyCount++;
+    }
+  });
+  const readPct = ov? Math.round(rv/ov*100):0;
+  document.getElementById("stats").innerHTML=`
+    <div class="stat"><div class="n">${rv}<small>/${ov} owned</small></div><div class="l">volumes read · ${readPct}%</div></div>
+    <div class="stat"><div class="n">${collValue.toFixed(0)} €</div><div class="l">collection value (owned)</div></div>
+    <div class="stat"><div class="n">${(readHours/60).toFixed(0)} h</div><div class="l">time spent reading</div></div>
+    <div class="stat"><div class="n">${buyBudget.toFixed(0)} €</div><div class="l">to buy · ${buyCount} on list 🛒</div></div>`;
+  renderStarted();
+}
+function renderStarted(){
+  const el=document.getElementById("started");if(!el)return;
+  // series you've begun (read ≥1) but not finished
+  const inProg=SEED.filter(m=>{const rd=read(m),ed=curEd(m);return rd>0 && rd<ed.vols;})
+    .map(m=>{const ed=curEd(m),rd=read(m),ow=owned(m);
+      return {m,rd,ow,vols:ed.vols,pct:Math.round(rd/ed.vols*100),ownPct:Math.round(ow/ed.vols*100)};})
+    .sort((a,b)=>b.pct-a.pct);
+  if(!inProg.length){el.innerHTML="";return;}
+  el.innerHTML=`<div class="started-hd">Series in progress — your journey</div>
+    <div class="started-list">${inProg.map(s=>`
+      <div class="srItem">
+        <div class="srTop"><span class="srName">${s.m.t}</span>
+          <span class="srNum">${s.rd}/${s.vols}${s.m.series==="ongoing"?"+":""} · ${s.pct}%</span></div>
+        <div class="sbar"><div class="sown" style="width:${s.ownPct}%"></div><div class="sfill" style="width:${s.pct}%"></div></div>
+      </div>`).join("")}</div>
+    <div class="started-key"><span><i class="k-read"></i> read</span><span><i class="k-own"></i> owned</span><span>＋ = ongoing series</span></div>`;
+}
+function setEd(id,i){const m=SEED.find(s=>s.id===id),v=m.editions[i].vols;rec(id).ed=i;rec(id).owned=Math.min(rec(id).owned,v);rec(id).read=Math.min(rec(id).read,rec(id).owned);save();render()}
+function setOwned(id,n){const m=SEED.find(s=>s.id===id);const r=rec(id);r.owned=Math.max(0,Math.min(curEd(m).vols,n));if(r.read>r.owned)r.read=r.owned;save();render()}
+function setRead(id,n){const m=SEED.find(s=>s.id===id);const r=rec(id);r.read=Math.max(0,Math.min(owned(m),n));save();render()}
+function setRating(id,n){rec(id).rating=n;save();render()}
+function toggleBuy(id){rec(id).buy=!rec(id).buy;save();render()}
+function setImg(id){
+  const cur=rec(id).img||"";
+  const v=prompt("Paste a cover image URL (leave empty for the generated motif):",cur);
+  if(v!==null){rec(id).img=v.trim();save();render()}
+}
+document.getElementById("controls").addEventListener("click",e=>{
+  if(!e.target.dataset.f)return;filter=e.target.dataset.f;
+  [...document.querySelectorAll(".chip")].forEach(c=>c.classList.toggle("on",c===e.target));render()});
+document.getElementById("search").addEventListener("input",e=>{q=e.target.value.toLowerCase();render()});
+document.getElementById("export").onclick=()=>{const b=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="ronin-progression.json";a.click()};
+document.getElementById("import").onclick=()=>document.getElementById("file").click();
+document.getElementById("file").onchange=e=>{const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();r.onload=()=>{try{state=migrate(JSON.parse(r.result));save();render()}catch(_){alert("Unreadable file")}};r.readAsText(f)};
+document.getElementById("reset").onclick=()=>{if(confirm("Reset everything?")){state={};save();render()}};
+document.getElementById("syncSetup").onclick=setupSync;
+document.getElementById("syncPush").onclick=pushNow;
+document.getElementById("syncPull").onclick=()=>pullNow(false);
+document.getElementById("restore").onclick=restoreBackup;
+// First-run seeding: pre-fill owned/read/rating from your real inventory
+(function seed(){
+  if(state.__seededV2)return;  // v2 seed = real inventory
+  // exact known state: [editionIndex, owned, read, rating]
+  const INV={
+    db:      [0, 8,  8,  null], // colour digital edition, fully read
+    gits:    [0, 3,  3,  null], // 2nd edition EN, 3 vols, read
+    gantz:   [0, 24, 0,  null], // perfect edition; reading — set your real read count
+    blame:   [0, 1,  0,  null], // master edition, 1 vol owned, reading
+    onepiece:[0, 1,  0,  null], // classic, 1 vol owned, reading
+    akira:   [0, 6,  6,  null], // grands livres, all read
+    fma:     [0, 0,  0,  null], // wishlist (Perfect recommended)
+  };
+  SEED.forEach(m=>{const r=rec(m.id);
+    if(INV[m.id]){const[ed,ow,rd,rt]=INV[m.id];r.ed=ed;r.owned=ow;r.read=rd;r.rating=rt;}
+    else {r.ed=0;r.owned=0;r.read=0;} // suggestions start empty
+  });
+  // pre-tick the buy list with titles you explicitly said you want
+  ["fma","naruto","dbsuper"].forEach(id=>{if(rec(id))rec(id).buy=true;});
+  state.__seededV2=true;state.__seeded=true;save();
+})();
+// One-time additive seed for later additions (won't disturb existing edits)
+(function seedBerserk(){
+  if(state.__seedBerserk)return;
+  const r=rec("berserk");
+  // only set if untouched (owned still 0), so we never overwrite real edits
+  if((r.owned||0)===0){r.ed=0;r.owned=42;r.read=41;}
+  state.__seedBerserk=true;save();
+})();
+render();
+// Sync init: show status, auto-pull if configured
+if(sync.token&&sync.gistId){setSync("ok","Sync active — checking…");pullNow(true);}
+else setSync("","Sync not set up — local data only");
+</script>
+</body>
+</html>
