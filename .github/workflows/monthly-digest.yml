@@ -1,0 +1,43 @@
+name: Monthly digest (Slack)
+
+# Once a month, diff the catalog (index.html SEED) + your synced progress against
+# last month's snapshot and post a Slack summary. The snapshot is stored as a
+# second file inside the same private Gist as your data — nothing is committed.
+
+on:
+  schedule:
+    - cron: "0 8 1 * *"   # 08:00 UTC on the 1st of each month
+  workflow_dispatch:        # run on demand from the Actions tab
+
+permissions:
+  contents: read
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Authenticate pip for the private automation-core dep
+        env:
+          AUTOMATION_CORE_TOKEN: ${{ secrets.AUTOMATION_CORE_TOKEN }}
+        run: |
+          # automation-core is private; rewrite github.com HTTPS to carry a
+          # token that can read it so the git+https requirement resolves.
+          git config --global url."https://x-access-token:${AUTOMATION_CORE_TOKEN}@github.com/".insteadOf "https://github.com/"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Post monthly digest
+        env:
+          # PAT with `gist` scope (+ `repo` only if this repo is private) so the
+          # job can read the private Gist and read index.html.
+          GITHUB_TOKEN: ${{ secrets.RONIN_GIST_TOKEN }}
+          RONIN_GIST_ID: ${{ secrets.RONIN_GIST_ID }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: python digest.py

@@ -19,9 +19,32 @@ factual and may reference French editions by name.
   `index.html` at repo root for GitHub Pages.
 - `README.md` — user-facing setup/usage.
 - `CLAUDE.md` — this file.
+- `digest.py` — monthly Slack digest (NOT part of the web app). Parses the SEED
+  catalog from `index.html` and your synced Gist progress, diffs against last
+  month's snapshot, and posts new suggestions / release-date changes / newly
+  released volumes / reading progress to Slack. Run `python digest.py --dry-run
+  --html index.html --state <data.json> [--snapshot <prev.json>]` to preview.
+- `requirements.txt` + `.github/workflows/monthly-digest.yml` — the monthly cron
+  that runs `digest.py`.
 
-No build step, no dependencies, no framework. Open the file in a browser and it
-runs.
+The **web app** has no build step, no dependencies, no framework — open
+`index.html` in a browser and it runs. The **digest** is the only Python: it
+depends on the private `ashomah/automation-core` lib (shared with the `level-up`
+project) for generic Slack/GitHub/Gist plumbing; all manga-specific logic
+(SEED parsing, diffing, wording) stays in `digest.py`. See the
+`automation-core-shared-repo` memory.
+
+### Monthly digest specifics
+- Snapshot is stored as `ronin-digest-snapshot.json` inside the **same private
+  Gist** as `ronin-data.json` (via `automation_core.github.update_gist`), so the
+  repo stays clean and there's no last-write-wins conflict with the app (which
+  only ever writes `ronin-data.json`).
+- "Available volumes" per series = the **recommended** edition's `vols` (else the
+  first edition's). A bump month-over-month = "new volume released".
+- Required Action secrets: `SLACK_WEBHOOK_URL`, `RONIN_GIST_ID`,
+  `RONIN_GIST_TOKEN` (classic PAT, `gist` scope; add `repo` only if this repo is
+  ever made private), `AUTOMATION_CORE_TOKEN` (read access to the private
+  automation-core repo — can be the same PAT if it has `repo`).
 
 ## Architecture (important)
 

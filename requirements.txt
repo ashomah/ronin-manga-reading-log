@@ -1,0 +1,4 @@
+# Only used by the monthly digest GitHub Action (the app itself is static).
+# automation-core is private — CI authenticates via AUTOMATION_CORE_TOKEN; see
+# .github/workflows/monthly-digest.yml.
+automation-core @ git+https://github.com/ashomah/automation-core.git@main
