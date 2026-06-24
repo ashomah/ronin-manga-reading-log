@@ -95,12 +95,17 @@ progress is keyed by id and stored separately.
   fields.
 - Helpers: `owned(m)`, `read(m)` (read is clamped ≤ owned), `curEd(m)`.
 - `orderedSeed()` — resolves display order: user's custom `__order` first, then
-  not-yet-ordered series owned-first (derived) by catalog index. `render()`
-  filters this. **Drag-to-reorder** (`pointerdown` on a `.grip`, pointer-based so
-  it works on touch) is active only in the unfiltered "all" view; on drop it
-  saves the new DOM order to `state.__order` (syncs via the Gist).
-- `render()` — builds cards (no section headers anymore; each card shows a
-  derived **owned/suggestion badge** instead). Each card:
+  not-yet-ordered series owned-first (derived) by catalog index.
+- `render()` — in the unfiltered "all" view, splits into two labelled groups
+  (📚 My collection / ✧ Suggestions) by derived section, each draggable; in a
+  filtered/search view it's a flat list and each card shows a derived
+  **owned/suggestion badge** instead of headers. Card HTML is built by
+  `cardHTML(m, rank, showBadge, canDrag)`.
+- **Drag-to-reorder** (`pointerdown` on a `.grip`, pointer-based so it works on
+  touch) is active only in the grouped view, and is **constrained to within a
+  group** (you can't drag a suggestion among owned titles — buying it promotes
+  it). On drop it saves the new DOM order to `state.__order` (syncs via Gist).
+  Each card:
   cover motif, badges, blurb, rating stars, buy tickbox, edition `<select>`,
   recommended-edition note, owned bar (+/-), read bar (read vs owned, +/-),
   series-journey bar (read vs full series, with owned "ghost"), meta grid.

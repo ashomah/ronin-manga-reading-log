@@ -223,7 +223,7 @@ const SEED=[
    {name:"Classic edition — Glénat",vols:42,price:8,mins:130,recommended:true,note:"Your version. Standard French format."},
    {name:"Deluxe (large format) — Glénat",vols:14,price:25,mins:390,note:"3-in-1 hardcovers, large format. Pricey but gorgeous."}
  ]},
- {id:"monster",section:"shelf",t:"Monster",a:"Naoki Urasawa",g:["thriller","seinen"],status:"reading",series:"complete",
+ {id:"monster",section:"wishlist",t:"Monster",a:"Naoki Urasawa",g:["thriller","seinen"],status:"todo",series:"complete",
   blurb:"A flawless psychological thriller. A surgeon, a killer, post-GDR Europe.",art:["#4a4036","#0e0c0a"],
   editions:[
    {name:"Deluxe, 9 vols — Kana",vols:9,price:18,mins:160,recommended:true,note:"Reference version, large format."},
@@ -554,10 +554,27 @@ function coverBg(m){
 
 function render(){
   const grid=document.getElementById("grid");
-  const canDrag = (filter==="all" && !q);   // reorder only when the full list shows
-  grid.classList.toggle("dragmode", canDrag);
+  // Grouped headers + drag are active only in the full unfiltered view, where
+  // every card is on screen and the two sections are both shown.
+  const grouped = (filter==="all" && !q);
+  grid.classList.toggle("dragmode", grouped);
   const list=orderedSeed().filter(matches);
-  grid.innerHTML=list.map((m,i)=>{
+  let html;
+  if(grouped){
+    const own=list.filter(m=>secOf(m)==="shelf");
+    const wish=list.filter(m=>secOf(m)!=="shelf");
+    const group=(label,arr,start)=> arr.length
+      ? `<div class="sechead">${label}</div>`+arr.map((m,k)=>cardHTML(m,start+k+1,false,true)).join("")
+      : "";
+    html = group("📚 My collection",own,0) + group("✧ Suggestions to explore",wish,own.length);
+  }else{
+    // filtered/search: flat list, no headers — show the owned/suggestion badge instead
+    html = list.map((m,i)=>cardHTML(m,i+1,true,false)).join("");
+  }
+  grid.innerHTML = html || `<p style="color:var(--muted);font-style:italic">No titles.</p>`;
+  renderStats();
+}
+function cardHTML(m,rankIdx,showBadge,canDrag){
     const r=rec(m.id),ed=curEd(m),ow=owned(m),rd=read(m);
     const ownPct=ed.vols?Math.round(ow/ed.vols*100):0;
     const readPct=ed.vols?Math.round(rd/ed.vols*100):0;
@@ -565,19 +582,18 @@ function render(){
     const leftToReadH=fmtH((ow-rd)*ed.mins);
     const isRead=statusOf(m)==="read";
     const sec=secOf(m);
-    const rankIdx=i+1;
     const bg = r.img ? `url('${r.img}')` : coverBg(m);
     return `<div class="card${r.buy?' onlist':''}" data-id="${m.id}">
       <div class="cover" style="background-image:${bg}">
         <div class="scrim"></div>
-        ${canDrag?'<div class="grip" title="Drag to reorder">⠿</div>':''}
+        ${canDrag?'<div class="grip" title="Drag to reorder (within its group)">⠿</div>':''}
         <div class="rank ${isRead?'read':''}">${isRead?'✓ READ':'#'+rankIdx}</div>
         <button class="imgbtn" onclick="setImg('${m.id}')">🖼 image</button>
         <div class="ct"><h3>${m.t}</h3><div class="author">${m.a}</div></div>
       </div>
       <div class="body">
         <div class="badges">
-          <span class="b ${sec==='shelf'?'sec-own':'sec-wish'}">${sec==='shelf'?'📚 owned':'✧ suggestion'}</span>
+          ${showBadge?`<span class="b ${sec==='shelf'?'sec-own':'sec-wish'}">${sec==='shelf'?'📚 owned':'✧ suggestion'}</span>`:''}
           <span class="b ${m.series}">${m.series==="complete"?"completed":"⚑ ongoing"}</span>
           ${m.g.map(x=>`<span class="b genre">${x}</span>`).join("")}
         </div>
@@ -637,8 +653,6 @@ function render(){
         </div>
       </div>
     </div>`;
-  }).join("")||`<p style="color:var(--muted);font-style:italic">No titles.</p>`;
-  renderStats();
 }
 function renderStats(){
   let ov=0,rv=0,collValue=0,readHours=0,buyBudget=0,buyCount=0;
@@ -706,6 +720,9 @@ gridEl.addEventListener("pointerdown",e=>{
     if(!dragEl)return;
     const over=cardUnder(ev.clientX,ev.clientY);
     if(!over||over===dragEl||over.parentNode!==gridEl)return;
+    // keep the two groups separate: only reorder within the same section
+    const dm=SEED.find(s=>s.id===dragEl.dataset.id), om=SEED.find(s=>s.id===over.dataset.id);
+    if(!dm||!om||secOf(dm)!==secOf(om))return;
     const rect=over.getBoundingClientRect();
     const after=(ev.clientY-rect.top)>rect.height/2;
     gridEl.insertBefore(dragEl, after?over.nextSibling:over);
