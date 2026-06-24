@@ -67,7 +67,11 @@ progress is keyed by id and stored separately.
 
 - `<style>` — design tokens at `:root` (ink/washi/cinnabar/jade/gold palette,
   Japanese woodblock-print feel). Cards, progress bars, sync bar, started-series
-  panel, buy-list styles.
+  panel, buy-list styles. **Light/dark theme**: a `:root[data-theme="dark"]`
+  block re-skins the tokens (+ patches a few hard-coded light-only colours);
+  toggled by the `🌙/☀️` button, stored per-device in `localStorage` key
+  `ronin_theme` (NOT synced — display pref). An inline `<head>` script applies
+  the saved/system theme before first paint to avoid a flash.
 - `SEED = [ ... ]` — the catalog. Each entry: `id, section, t (title), a
   (author), g (genres[]), status, series ("complete"|"ongoing"), blurb, art
   ([color1,color2] for the generated cover motif), editions[], optional

@@ -163,7 +163,36 @@
   .io button:hover{background:var(--ink);color:var(--washi)}
   @media (max-width:640px){.stats{grid-template-columns:repeat(2,1fr)}.seal{width:50px;height:50px;font-size:24px;top:34px}}
   @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto}}
+  /* ── Dark theme ─────────────────────────────────────────────────
+     Re-skins the design tokens, then patches the handful of colours
+     that were hard-coded for a light background (tracks, blurb text,
+     star + genre tints). Toggled via data-theme on <html>. ── */
+  :root[data-theme="dark"]{
+    --ink:#e9e2d2; --washi:#15120e; --washi-2:#211d17;
+    --cinnabar:#d8503f; --cinnabar-d:#e8836f;
+    --jade:#6aa392; --gold:#cda85f; --line:#3c372f; --muted:#9c9384;
+    --shadow:0 1px 0 rgba(0,0,0,.25), 0 16px 34px -18px rgba(0,0,0,.75);
+  }
+  [data-theme="dark"] body{
+    background:radial-gradient(120% 80% at 50% -10%, #221c14 0%, var(--washi) 55%, #0d0b08 100%) fixed;
+  }
+  [data-theme="dark"] .blurb{color:#c7bfae}
+  [data-theme="dark"] .b.genre{background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1px rgba(255,255,255,.13)}
+  [data-theme="dark"] .b.ongoing,[data-theme="dark"] .bestrec,[data-theme="dark"] .rel .lab{color:#d8b873}
+  [data-theme="dark"] .rate .star{color:rgba(255,255,255,.26)}
+  [data-theme="dark"] .prog .bar{background:rgba(255,255,255,.1);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+  [data-theme="dark"] .sbar,[data-theme="dark"] .seriesprog .sbar{background:rgba(255,255,255,.1)}
+  [data-theme="dark"] .prog.readblock{border-top-color:rgba(255,255,255,.22)}
 </style>
+<script>
+  // Apply the saved (or system) theme before first paint to avoid a flash.
+  (function(){try{
+    var t=localStorage.getItem("ronin_theme");
+    if(t!=="dark"&&t!=="light")
+      t=(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";
+    document.documentElement.setAttribute("data-theme",t);
+  }catch(e){}})();
+</script>
 </head>
 <body>
 <div class="wrap">
@@ -177,6 +206,7 @@
       <span class="dot" id="syncdot"></span>
       <span class="syncmsg" id="syncmsg">Sync not set up — local data only</span>
       <div class="spacer"></div>
+      <button id="themeBtn" title="Toggle light / dark (saved on this device)">🌙 Dark</button>
       <button id="syncPull" title="Pull from GitHub">⤓ Pull</button>
       <button id="syncPush" title="Push to GitHub">⤒ Push</button>
       <button id="catUpdate" title="Ask Claude to refresh dates, suggest series, or add one — opens a PR on GitHub">⚡ Catalog</button>
@@ -755,6 +785,17 @@ document.getElementById("syncSetup").onclick=setupSync;
 document.getElementById("syncPush").onclick=pushNow;
 document.getElementById("syncPull").onclick=()=>pullNow(false);
 document.getElementById("catUpdate").onclick=catalogMenu;
+/* ── Light / dark theme (per-device, not synced) ── */
+const THEME_KEY="ronin_theme";
+function curTheme(){return document.documentElement.getAttribute("data-theme")==="dark"?"dark":"light";}
+function setThemeBtn(){document.getElementById("themeBtn").textContent=curTheme()==="dark"?"☀️ Light":"🌙 Dark";}
+document.getElementById("themeBtn").onclick=()=>{
+  const next=curTheme()==="dark"?"light":"dark";
+  document.documentElement.setAttribute("data-theme",next);
+  try{localStorage.setItem(THEME_KEY,next);}catch(e){}
+  setThemeBtn();
+};
+setThemeBtn();
 document.getElementById("restore").onclick=restoreBackup;
 // First-run seeding: pre-fill owned/read/rating from your real inventory
 (function seed(){
