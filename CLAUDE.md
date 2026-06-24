@@ -68,19 +68,24 @@ progress is keyed by id and stored separately.
 - `<style>` — design tokens at `:root` (ink/washi/cinnabar/jade/gold palette,
   Japanese woodblock-print feel). Cards, progress bars, sync bar, started-series
   panel, buy-list styles.
-- `SEED = [ ... ]` — the catalog. Two sections via `section:"shelf"` (owned) or
-  `section:"wishlist"` (suggestions). Each entry: `id, section, t (title), a
-  (author), g (genres[]), status ("read"|"reading"|"todo"), series
-  ("complete"|"ongoing"), blurb, art ([color1,color2] for the generated cover
-  motif), editions[], optional nextDate, optional verify:true (release date
-  needs live check)`.
+- `SEED = [ ... ]` — the catalog. Each entry: `id, section, t (title), a
+  (author), g (genres[]), status, series ("complete"|"ongoing"), blurb, art
+  ([color1,color2] for the generated cover motif), editions[], optional
+  nextDate, optional verify:true (release date needs live check)`.
   - Each edition: `{name, vols, price, mins (read minutes/vol), optional
     recommended:true, optional note}`.
+  - **`section` and `status` are only INITIAL seeds now — the live values are
+    derived from your progress** (see `secOf`/`statusOf`): `owned>0` → shelf
+    (else wishlist); `read>0` → reading, a completed series read to the end →
+    read, `read==0` → todo. The static `section`/`status` fields can therefore
+    drift from reality; don't rely on them in app logic (the digest still reads
+    catalog `section` for "new suggestion" classification — that's intentional).
 - Schema & migrations: `CURRENT_SCHEMA`, `MIGRATIONS{}`, `migrate()`,
   `restoreBackup()`. Data carries `__schema`; migrations run on load, on gist
   pull, and on JSON import, writing a reversible backup before mutating.
   **To change the data shape: bump `CURRENT_SCHEMA` and add a `MIGRATIONS[n]`
-  function (vN-1 → vN).** Current schema = 2 (added `rating`).
+  function (vN-1 → vN).** Current schema = 3 (v2 added `rating`; v3 added
+  `__order`, the custom display order — an array of ids in `state`).
 - Sync engine: `gh()`, `schedulePush()`, `pushNow()`, `pullNow()`,
   `setupSync()`. Classic GitHub token with **only `gist` scope**; token + gistId
   in localStorage per device. Timestamp-based (`__updatedAt`) last-write-wins
@@ -89,7 +94,13 @@ progress is keyed by id and stored separately.
   `{ed, owned, read, img, rating, buy}`. Read defensively here when adding
   fields.
 - Helpers: `owned(m)`, `read(m)` (read is clamped ≤ owned), `curEd(m)`.
-- `render()` — builds cards, injects section headers in "all" view. Each card:
+- `orderedSeed()` — resolves display order: user's custom `__order` first, then
+  not-yet-ordered series owned-first (derived) by catalog index. `render()`
+  filters this. **Drag-to-reorder** (`pointerdown` on a `.grip`, pointer-based so
+  it works on touch) is active only in the unfiltered "all" view; on drop it
+  saves the new DOM order to `state.__order` (syncs via the Gist).
+- `render()` — builds cards (no section headers anymore; each card shows a
+  derived **owned/suggestion badge** instead). Each card:
   cover motif, badges, blurb, rating stars, buy tickbox, edition `<select>`,
   recommended-edition note, owned bar (+/-), read bar (read vs owned, +/-),
   series-journey bar (read vs full series, with owned "ghost"), meta grid.
@@ -142,8 +153,10 @@ onepiece, dbsuper, vagabond, and any ongoing additions.
 - Watch for nested double-quotes inside JS string literals when editing
   blurbs/notes (broke the build once — use single quotes inside, e.g.
   `'next DB series'`).
-- Section headers render only in "all" view with no search active. Keep shelf
-  entries before wishlist entries; `SEED` is stable-sorted by section.
+- Display order is user-controlled (`__order`, drag-to-reorder), not the `SEED`
+  array order. Reordering entries in `SEED` only changes the *default* slot for
+  not-yet-ordered series; once the user has dragged, their `__order` wins. So
+  don't reorder `SEED` to change what the user sees — that's their data now.
 - After any structural edit, sanity-check the `<script>` parses before
   committing.
 - Don't add real copyrighted cover art to the catalog; use the generated `art`

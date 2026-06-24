@@ -94,6 +94,13 @@
   .cover .rank.read{background:var(--jade)}
   .cover .imgbtn{position:absolute;top:12px;right:14px;z-index:1;background:rgba(0,0,0,.45);color:#fff;
     border:1px solid rgba(255,255,255,.4);font-size:11px;padding:3px 8px;border-radius:6px;cursor:pointer;font-family:ui-monospace,monospace}
+  /* drag handle (shown only in the unfiltered view); rank shifts right to make room */
+  .cover .grip{position:absolute;top:12px;left:14px;z-index:3;background:rgba(0,0,0,.45);color:#fff;
+    border:1px solid rgba(255,255,255,.4);border-radius:6px;padding:2px 7px;font-size:13px;line-height:1.2;
+    cursor:grab;touch-action:none;user-select:none}
+  .cover .grip:active{cursor:grabbing}
+  .grid.dragmode .cover .rank{left:48px}
+  .card.dragging{opacity:.55;outline:2px dashed var(--cinnabar);outline-offset:-2px;pointer-events:none}
   .body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:11px;flex:1}
   .badges{display:flex;gap:5px;flex-wrap:wrap}
   .b{font-family:ui-monospace,monospace;font-size:9.5px;text-transform:uppercase;letter-spacing:.1em;
@@ -101,6 +108,8 @@
   .b.complete{background:rgba(63,107,94,.15);color:var(--jade);box-shadow:inset 0 0 0 1px rgba(63,107,94,.35)}
   .b.ongoing{background:rgba(176,141,79,.16);color:#8a6d33;box-shadow:inset 0 0 0 1px rgba(176,141,79,.4)}
   .b.genre{background:rgba(20,18,14,.06);color:var(--muted);box-shadow:inset 0 0 0 1px rgba(20,18,14,.12)}
+  .b.sec-own{background:rgba(63,107,94,.18);color:var(--jade);box-shadow:inset 0 0 0 1px rgba(63,107,94,.4)}
+  .b.sec-wish{background:rgba(192,57,43,.1);color:var(--cinnabar-d);box-shadow:inset 0 0 0 1px rgba(192,57,43,.35)}
   .blurb{font-size:13.5px;color:#3c372d}
   .rate{display:flex;align-items:center;gap:3px}
   .rate .lab{font-family:ui-monospace,monospace;font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-right:4px}
@@ -306,9 +315,10 @@ const SEED=[
   blurb:"Sorcerers, lizard heads, smoke. Weird, funny, ultra-stylish.",art:["#4a5a2e","#0e1208"],
   editions:[{name:"23-vol edition — Soleil Manga",vols:23,price:8,mins:80,recommended:true}]}
 ];
-// Keep shelf section first (stable), suggestions after — for grouped headers
+// Stable default index per series (catalog order). Display order is resolved at
+// render time by orderedSeed(): the user's custom __order first, then anything
+// not-yet-ordered grouped owned-first by catalog section.
 SEED.forEach((m,i)=>m.__ord=i);
-SEED.sort((a,b)=>{const as=a.section==="shelf"?0:1,bs=b.section==="shelf"?0:1;return as-bs||a.__ord-b.__ord;});
 
 const KEY="ronin_manga_v2";
 const SYNC_KEY="ronin_sync_cfg";   // {token, gistId} — per device, never in the file
@@ -323,12 +333,14 @@ const SYNC_KEY="ronin_sync_cfg";   // {token, gistId} — per device, never in t
      1. bump CURRENT_SCHEMA
      2. add a MIGRATIONS[n] function that turns vN-1 data into vN
    Old gists/local data then self-upgrade on next open.       ── */
-const CURRENT_SCHEMA=2;
+const CURRENT_SCHEMA=3;
 const MIGRATIONS={
   // v1 → v2: add a 1–5 personal rating field (null = unrated)
   2:(d)=>{ for(const k in d){ if(k.startsWith("__"))continue;
             if(d[k] && typeof d[k]==="object") d[k].rating = d[k].rating ?? null; }
           return d; },
+  // v2 → v3: custom display order lives in __order (array of ids); empty = default
+  3:(d)=>{ if(!Array.isArray(d.__order)) d.__order=[]; return d; },
 };
 const BACKUP_KEY="ronin_manga_backup"; // pre-migration snapshot (reversible)
 
@@ -498,17 +510,40 @@ function rec(id){const r=state[id]||(state[id]={ed:0,owned:0,read:0,img:"",ratin
 function curEd(m){return m.editions[rec(m.id).ed]||m.editions[0]}
 function owned(m){const r=rec(m.id);return r.owned ?? (m.status==="read"?curEd(m).vols:0)}
 function read(m){return Math.min(rec(m.id).read||0, owned(m))}
+// Section & status are DERIVED from your progress, not the static catalog:
+//   own ≥1 → shelf (owned), else wishlist; read ≥1 → reading,
+//   a completed series read to the end → read, read 0 → todo.
+function secOf(m){return owned(m)>0?"shelf":"wishlist";}
+function statusOf(m){const rd=read(m),v=curEd(m).vols;
+  if(rd<=0)return "todo";
+  if(v&&rd>=v&&m.series==="complete")return "read";
+  return "reading";}
+// Display order: custom __order first, then unordered series owned-first (catalog
+// section) by catalog index. New series fall in sensibly until you drag them.
+function orderedSeed(){
+  const ord=Array.isArray(state.__order)?state.__order:[];
+  const pos=new Map(ord.map((id,i)=>[id,i]));
+  return SEED.slice().sort((a,b)=>{
+    const ai=pos.has(a.id)?pos.get(a.id):null, bi=pos.has(b.id)?pos.get(b.id):null;
+    if(ai!==null&&bi!==null)return ai-bi;
+    if(ai!==null)return -1;
+    if(bi!==null)return 1;
+    // not-yet-ordered: owned-first (derived, not the static catalog section,
+    // which can be stale), then catalog index.
+    return (secOf(a)==="shelf"?0:1)-(secOf(b)==="shelf"?0:1) || a.__ord-b.__ord;
+  });
+}
 
 let filter="all",q="";
 function matches(m){
   if(q){if(!(m.t+" "+m.a).toLowerCase().includes(q))return false}
   if(filter==="all")return true;
-  if(filter==="shelf")return m.section==="shelf";
-  if(filter==="wishlist")return m.section!=="shelf";
+  if(filter==="shelf")return secOf(m)==="shelf";
+  if(filter==="wishlist")return secOf(m)!=="shelf";
   if(filter==="buylist")return rec(m.id).buy;
   if(filter==="ongoing")return m.series==="ongoing";
   if(filter==="complete")return m.series==="complete";
-  return m.status===filter;
+  return statusOf(m)===filter;
 }
 function fmtH(mins){const h=mins/60;return h>=10?Math.round(h):h.toFixed(1)}
 function coverBg(m){
@@ -519,35 +554,30 @@ function coverBg(m){
 
 function render(){
   const grid=document.getElementById("grid");
-  const list=SEED.filter(matches);
-  const showHeaders = (filter==="all" && !q);
-  let lastSection=null;
-  grid.innerHTML=list.map(m=>{
-    let header="";
-    if(showHeaders){
-      const sec = m.section==="shelf" ? "shelf" : "wishlist";
-      if(sec!==lastSection){
-        lastSection=sec;
-        header = `<div class="sechead">${sec==="shelf"?"📚 My collection":"✧ Suggestions to explore"}</div>`;
-      }
-    }
+  const canDrag = (filter==="all" && !q);   // reorder only when the full list shows
+  grid.classList.toggle("dragmode", canDrag);
+  const list=orderedSeed().filter(matches);
+  grid.innerHTML=list.map((m,i)=>{
     const r=rec(m.id),ed=curEd(m),ow=owned(m),rd=read(m);
     const ownPct=ed.vols?Math.round(ow/ed.vols*100):0;
     const readPct=ed.vols?Math.round(rd/ed.vols*100):0;
     const leftToBuy=(ed.vols-ow)*ed.price;
     const leftToReadH=fmtH((ow-rd)*ed.mins);
-    const isRead=m.status==="read";
-    const rankIdx=SEED.indexOf(m)+1;
+    const isRead=statusOf(m)==="read";
+    const sec=secOf(m);
+    const rankIdx=i+1;
     const bg = r.img ? `url('${r.img}')` : coverBg(m);
-    return header+`<div class="card${r.buy?' onlist':''}">
+    return `<div class="card${r.buy?' onlist':''}" data-id="${m.id}">
       <div class="cover" style="background-image:${bg}">
         <div class="scrim"></div>
+        ${canDrag?'<div class="grip" title="Drag to reorder">⠿</div>':''}
         <div class="rank ${isRead?'read':''}">${isRead?'✓ READ':'#'+rankIdx}</div>
         <button class="imgbtn" onclick="setImg('${m.id}')">🖼 image</button>
         <div class="ct"><h3>${m.t}</h3><div class="author">${m.a}</div></div>
       </div>
       <div class="body">
         <div class="badges">
+          <span class="b ${sec==='shelf'?'sec-own':'sec-wish'}">${sec==='shelf'?'📚 owned':'✧ suggestion'}</span>
           <span class="b ${m.series}">${m.series==="complete"?"completed":"⚑ ongoing"}</span>
           ${m.g.map(x=>`<span class="b genre">${x}</span>`).join("")}
         </div>
@@ -656,6 +686,44 @@ function setImg(id){
   const v=prompt("Paste a cover image URL (leave empty for the generated motif):",cur);
   if(v!==null){rec(id).img=v.trim();save();render()}
 }
+/* ── Drag-to-reorder ───────────────────────────────────────────
+   Pointer-based (works with mouse and touch). Only active in the
+   unfiltered "all" view, where every card is on screen, so the DOM
+   order after a drop == the full custom order we persist to __order
+   (in localStorage + the Gist). ── */
+let dragEl=null,dragMoved=false;
+const gridEl=document.getElementById("grid");
+function cardUnder(x,y){const el=document.elementFromPoint(x,y);return el?el.closest(".card"):null;}
+gridEl.addEventListener("pointerdown",e=>{
+  const grip=e.target.closest(".grip");
+  if(!grip)return;
+  dragEl=grip.closest(".card");if(!dragEl)return;
+  e.preventDefault();
+  dragMoved=false;
+  dragEl.classList.add("dragging");
+  try{grip.setPointerCapture(e.pointerId);}catch(_){}
+  const move=ev=>{
+    if(!dragEl)return;
+    const over=cardUnder(ev.clientX,ev.clientY);
+    if(!over||over===dragEl||over.parentNode!==gridEl)return;
+    const rect=over.getBoundingClientRect();
+    const after=(ev.clientY-rect.top)>rect.height/2;
+    gridEl.insertBefore(dragEl, after?over.nextSibling:over);
+    dragMoved=true;
+  };
+  const up=()=>{
+    window.removeEventListener("pointermove",move);
+    window.removeEventListener("pointerup",up);
+    if(dragEl)dragEl.classList.remove("dragging");
+    if(dragMoved){
+      state.__order=[...gridEl.querySelectorAll(".card")].map(c=>c.dataset.id);
+      save();render();
+    }
+    dragEl=null;
+  };
+  window.addEventListener("pointermove",move);
+  window.addEventListener("pointerup",up);
+});
 document.getElementById("controls").addEventListener("click",e=>{
   if(!e.target.dataset.f)return;filter=e.target.dataset.f;
   [...document.querySelectorAll(".chip")].forEach(c=>c.classList.toggle("on",c===e.target));render()});
