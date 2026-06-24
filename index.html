@@ -207,66 +207,84 @@
    `art` = palette for the generated cover motif (no copyrighted art). ── */
 const SEED=[
  // ═══════════════ MY COLLECTION (what you own) ═══════════════
- {id:"db",section:"shelf",t:"Dragon Ball",a:"Akira Toriyama",g:["shōnen","aventure"],status:"read",series:"complete",
-  blurb:"The cornerstone of shōnen. You read it in digital colour — a print set would be a nice move to the physical object.",art:["#d98324","#1a1410"],
+ {id:"berserk",section:"shelf",t:"Berserk",a:"Kentarō Miura",g:["dark fantasy","seinen"],status:"reading",series:"ongoing",verify:true,
+ blurb:"The ultimate dark fantasy. You own all 42 and are one volume from the current edge.",art:["#7a1f15","#0a0a0a"],
+ nextDate:"Ongoing — continued by Studio Gaga after Miura's death; vol.43 on 1 Jul 2026",
+ editions:[
+   {name:"Classic edition — Glénat",vols:42,price:8,mins:130,recommended:true,note:"Your version. Standard French format."},
+   {name:"Deluxe (large format) — Glénat",vols:14,price:25,mins:390,note:"3-in-1 hardcovers, large format. Pricey but gorgeous."}
+ ]},
+ {id:"monster",section:"shelf",t:"Monster",a:"Naoki Urasawa",g:["thriller","seinen"],status:"todo",series:"complete",
+  blurb:"A flawless psychological thriller. A surgeon, a killer, post-GDR Europe.",art:["#4a4036","#0e0c0a"],
   editions:[
-   {name:"Digital colour edition (jpeg), FR",vols:8,price:0,mins:90,note:"Your current version: read online, colourised."},
-   {name:"Original edition, 42 vols — Glénat",vols:42,price:7,mins:75,recommended:true,note:"The reference print format, B&W, Japanese reading order."},
-   {name:"Perfect Edition, 34 vols — Glénat",vols:34,price:10.55,mins:95,note:"A5 large format, Toriyama covers, colour pages."},
-   {name:"Colour print edition — Glénat",vols:0,price:0,mins:90,note:"Sold by arc (Sangoku, Freezer…), colourised, pricier."}
+   {name:"Deluxe, 9 vols — Kana",vols:9,price:18,mins:160,recommended:true,note:"Reference version, large format."},
+   {name:"Standard edition, 18 vols — Kana",vols:18,price:8,mins:80,note:"Older edition."}
   ]},
- {id:"gits",section:"shelf",t:"Ghost in the Shell",a:"Masamune Shirow",g:["cyberpunk","sf"],status:"read",series:"complete",
+  {id:"gits",section:"shelf",t:"Ghost in the Shell",a:"Masamune Shirow",g:["cyberpunk","sf"],status:"read",series:"complete",
   blurb:"Cyborgs, consciousness, networks. You own the complete English 2nd edition (3 volumes).",art:["#2e6f8e","#0d1418"],
   editions:[
-   {name:"2nd Edition (Kodansha, EN) — 3 vol.",vols:3,price:18,mins:130,recommended:true,note:"Your version. Vol.1 ISBN: 978-1593072285. The most complete in English."},
-   {name:"Perfect Edition — Glénat (FR)",vols:3,price:15,mins:130,note:"French equivalent, restored colour plates."}
+    {name:"2nd Edition (Kodansha, EN) — 3 vol.",vols:3,price:18,mins:130,recommended:true,note:"Your version. Vol.1 ISBN: 978-1593072285. The most complete in English."},
+    {name:"Perfect Edition — Glénat (FR)",vols:3,price:15,mins:130,note:"French equivalent, restored colour plates."}
   ]},
- {id:"gantz",section:"shelf",t:"Gantz",a:"Hiroya Oku",g:["sf","horreur","seinen"],status:"reading",series:"complete",
+  {id:"gantz",section:"shelf",t:"Gantz",a:"Hiroya Oku",g:["sf","horreur","seinen"],status:"reading",series:"complete",
   blurb:"Violence, sex, aliens, a black sphere. Brutal and addictive.",art:["#1a1a1a","#000"],
   editions:[
-   {name:"Perfect Edition — Delcourt/Tonkam (FR)",vols:24,price:13,mins:150,recommended:true,note:"Your version. Double-volume large format, uncensored and complete."},
-   {name:"Standard edition, 37 vols — Delcourt/Tonkam",vols:37,price:9,mins:90,note:"Older pocket format."}
+    {name:"Perfect Edition — Delcourt/Tonkam (FR)",vols:24,price:13,mins:150,recommended:true,note:"Your version. Double-volume large format, uncensored and complete."},
+    {name:"Standard edition, 37 vols — Delcourt/Tonkam",vols:37,price:9,mins:90,note:"Older pocket format."}
   ]},
- {id:"blame",section:"shelf",t:"Blame!",a:"Tsutomu Nihei",g:["cyberpunk","sf","seinen"],status:"reading",series:"complete",
+  {id:"blame",section:"shelf",t:"Blame!",a:"Tsutomu Nihei",g:["cyberpunk","sf","seinen"],status:"reading",series:"complete",
   blurb:"An endless megastructure, almost wordless. Pure architectural vertigo.",art:["#3a4a52","#08080a"],
   editions:[
-   {name:"Master Edition (large books) — Glénat",vols:6,price:18,mins:90,recommended:true,note:"Your version. Large format is THE way to read Nihei."},
-   {name:"Original edition, 10 vols — Glénat",vols:10,price:7,mins:55,note:"Small format, out of print / secondhand."}
+    {name:"Master Edition (large books) — Glénat",vols:6,price:18,mins:90,recommended:true,note:"Your version. Large format is THE way to read Nihei."},
+    {name:"Original edition, 10 vols — Glénat",vols:10,price:7,mins:55,note:"Small format, out of print / secondhand."}
   ]},
- {id:"onepiece",section:"shelf",t:"One Piece",a:"Eiichirō Oda",g:["shōnen","aventure"],status:"reading",series:"ongoing",verify:true,
+  {id:"onepiece",section:"shelf",t:"One Piece",a:"Eiichirō Oda",g:["shōnen","aventure"],status:"reading",series:"ongoing",verify:true,
   blurb:"The sprawling pirate epic. You're just starting (1 vol) — the longest road in your collection.",art:["#c0392b","#10243a"],
   nextDate:"Ongoing — vol.113 on 23 Sep 2026 (~150 vols targeted by ~2028)",
   editions:[
-   {name:"Original edition (classic format) — Glénat",vols:112,price:7.20,mins:75,recommended:true,note:"Your version. 112 vols out, Japanese order, revised translation."}
+    {name:"Original edition (classic format) — Glénat",vols:112,price:7.20,mins:75,recommended:true,note:"Your version. 112 vols out, Japanese order, revised translation."}
   ]},
- {id:"akira",section:"shelf",t:"Akira",a:"Katsuhiro Ōtomo",g:["cyberpunk","sf"],status:"read",series:"complete",
+  {id:"akira",section:"shelf",t:"Akira",a:"Katsuhiro Ōtomo",g:["cyberpunk","sf"],status:"read",series:"complete",
   blurb:"The big bang of cyberpunk. You've read it all, in large format.",art:["#c0392b","#1a1410"],
   editions:[
-   {name:"B&W 'original ed.' large books — Glénat",vols:6,price:14.95,mins:200,recommended:true,note:"Your version. Ōtomo-approved, Japanese order. The reference."},
-   {name:"B&W 6 vols (old, Western order) — Glénat",vols:6,price:13,mins:200,note:"Mirrored artwork."},
-   {name:"Colour, 14 vols — Glénat",vols:14,price:13,mins:90,note:"Colourised for the US market, smaller format."}
+    {name:"B&W 'original ed.' large books — Glénat",vols:6,price:14.95,mins:200,recommended:true,note:"Your version. Ōtomo-approved, Japanese order. The reference."},
+    {name:"B&W 6 vols (old, Western order) — Glénat",vols:6,price:13,mins:200,note:"Mirrored artwork."},
+    {name:"Colour, 14 vols — Glénat",vols:14,price:13,mins:90,note:"Colourised for the US market, smaller format."}
   ]},
-  {id:"berserk",section:"shelf",t:"Berserk",a:"Kentarō Miura",g:["dark fantasy","seinen"],status:"reading",series:"ongoing",verify:true,
-  blurb:"The ultimate dark fantasy. You own all 42 and are one volume from the current edge.",art:["#7a1f15","#0a0a0a"],
-  nextDate:"Ongoing — continued by Studio Gaga after Miura's death; vol.43 on 1 Jul 2026",
-  editions:[
-    {name:"Classic edition — Glénat",vols:42,price:8,mins:130,recommended:true,note:"Your version. Standard French format."},
-    {name:"Deluxe (large format) — Glénat",vols:14,price:25,mins:390,note:"3-in-1 hardcovers, large format. Pricey but gorgeous."}
-  ]},
+  {id:"db",section:"shelf",t:"Dragon Ball",a:"Akira Toriyama",g:["shōnen","aventure"],status:"read",series:"complete",
+   blurb:"The cornerstone of shōnen. You read it in digital colour — a print set would be a nice move to the physical object.",art:["#d98324","#1a1410"],
+   editions:[
+    {name:"Digital colour edition (jpeg), FR",vols:8,price:0,mins:90,note:"Your current version: read online, colourised."},
+    {name:"Original edition, 42 vols — Glénat",vols:42,price:7,mins:75,recommended:true,note:"The reference print format, B&W, Japanese reading order."},
+    {name:"Perfect Edition, 34 vols — Glénat",vols:34,price:10.55,mins:95,note:"A5 large format, Toriyama covers, colour pages."},
+    {name:"Colour print edition — Glénat",vols:0,price:0,mins:90,note:"Sold by arc (Sangoku, Freezer…), colourised, pricier."}
+   ]},
   
   // ═══════════════ SUGGESTIONS / WISHLIST ═══════════════
+  {id:"pluto",section:"wishlist",t:"Pluto",a:"Naoki Urasawa",g:["sf","thriller","seinen"],status:"todo",series:"complete",
+   blurb:"SF, robots, identity. Short, dense, masterful. Ideal after GITS.",art:["#3a5a6e","#0c1014"],
+   editions:[{name:"Standard edition, 8 vols — Kana",vols:8,price:9,mins:85,recommended:true}]},
+  {id:"blameprequel",section:"wishlist",t:"Biomega / NOiSE",a:"Tsutomu Nihei",g:["cyberpunk","sf","seinen"],status:"todo",series:"complete",
+   blurb:"If Blame! gripped you: more Nihei, same industrial vertigo. NOiSE is the Blame! prequel.",art:["#3a4a52","#08080a"],
+   editions:[{name:"Glénat (FR)",vols:6,price:8,mins:70,recommended:true,note:"Biomega 6 vols; NOiSE 1 vol (Blame! prequel)."}]},
+   {id:"bladeimmortal",section:"wishlist",t:"L'Habitant de l'infini",a:"Hiroaki Samura",g:["historique","seinen"],status:"todo",series:"complete",
+    blurb:"An immortal samurai, blood, incredible linework. Violent and beautiful.",art:["#5a4a3a","#100c0a"],
+    editions:[
+     {name:"Deluxe (large format) — Casterman",vols:15,price:18,mins:180,recommended:true,note:"Double volumes, Japanese reading order."},
+     {name:"Standard edition, ~30 vols — Casterman/Sakka",vols:30,price:8,mins:90,note:"Older, some in Western reading order."}
+    ]},
+   {id:"dbsuper",section:"wishlist",t:"Dragon Ball Super",a:"Toyotarō / Toriyama",g:["shōnen","aventure"],status:"todo",series:"ongoing",verify:true,
+   blurb:"The official Dragon Ball sequel: gods of destruction, parallel universes. Your 'next DB series' wish.",art:["#2e6f9e","#10141a"],
+   nextDate:"On pause — 24 vols out in France; series on hiatus, vol.25 unannounced ⚑",
+   editions:[
+    {name:"Standard edition — Glénat (FR)",vols:23,price:7,mins:75,recommended:true,note:"Classic format. Publication currently on pause."}
+   ]},
   {id:"fma",section:"wishlist",t:"Fullmetal Alchemist",a:"Hiromu Arakawa",g:["shōnen","aventure"],status:"todo",series:"complete",
    blurb:"Alchemy, grief, a military state. Near-perfect construction. (On your wishlist.)",art:["#b08d4f","#161a14"],
    editions:[
     {name:"Perfect Edition, 18 vols — Kurokawa",vols:18,price:11.95,mins:120,recommended:true,note:"THE version to get: A5, colour pages, revised translation. ~€215."},
     {name:"Standard edition, 27 vols — Kurokawa",vols:27,price:7.30,mins:80,note:"Pocket format, cheaper (~€197) but without the colour pages."}
    ]},
-  {id:"dbsuper",section:"wishlist",t:"Dragon Ball Super",a:"Toyotarō / Toriyama",g:["shōnen","aventure"],status:"todo",series:"ongoing",verify:true,
-  blurb:"The official Dragon Ball sequel: gods of destruction, parallel universes. Your 'next DB series' wish.",art:["#2e6f9e","#10141a"],
-  nextDate:"On pause — 24 vols out in France; series on hiatus, vol.25 unannounced ⚑",
-  editions:[
-   {name:"Standard edition — Glénat (FR)",vols:23,price:7,mins:75,recommended:true,note:"Classic format. Publication currently on pause."}
-  ]},
  {id:"naruto",section:"wishlist",t:"Naruto",a:"Masashi Kishimoto",g:["shōnen","aventure"],status:"todo",series:"complete",
   blurb:"Ninjas, rivalries, perseverance. A shōnen pillar, completed. Your wish.",art:["#d9821f","#161008"],
   editions:[
@@ -284,27 +302,9 @@ const SEED=[
   blurb:"Vikings, revenge then a quest for peace. By the author of Planetes.",art:["#2e5a6e","#0c1216"],
   nextDate:"Completed — final vol.29: 13 May 2026",
   editions:[{name:"Standard edition, 29 vols — Kurokawa",vols:29,price:7.65,mins:90,recommended:true,note:"Completed series."}]},
- {id:"monster",section:"wishlist",t:"Monster",a:"Naoki Urasawa",g:["thriller","seinen"],status:"todo",series:"complete",
-  blurb:"A flawless psychological thriller. A surgeon, a killer, post-GDR Europe.",art:["#4a4036","#0e0c0a"],
-  editions:[
-   {name:"Deluxe, 9 vols — Kana",vols:9,price:18,mins:160,recommended:true,note:"Reference version, large format."},
-   {name:"Standard edition, 18 vols — Kana",vols:18,price:8,mins:80,note:"Older edition."}
-  ]},
- {id:"pluto",section:"wishlist",t:"Pluto",a:"Naoki Urasawa",g:["sf","thriller","seinen"],status:"todo",series:"complete",
-  blurb:"SF, robots, identity. Short, dense, masterful. Ideal after GITS.",art:["#3a5a6e","#0c1014"],
-  editions:[{name:"Standard edition, 8 vols — Kana",vols:8,price:9,mins:85,recommended:true}]},
- {id:"blameprequel",section:"wishlist",t:"Biomega / NOiSE",a:"Tsutomu Nihei",g:["cyberpunk","sf","seinen"],status:"todo",series:"complete",
-  blurb:"If Blame! gripped you: more Nihei, same industrial vertigo. NOiSE is the Blame! prequel.",art:["#3a4a52","#08080a"],
-  editions:[{name:"Glénat (FR)",vols:6,price:8,mins:70,recommended:true,note:"Biomega 6 vols; NOiSE 1 vol (Blame! prequel)."}]},
  {id:"dorohedoro",section:"wishlist",t:"Dorohedoro",a:"Q Hayashida",g:["dark fantasy","sf","seinen"],status:"todo",series:"complete",
   blurb:"Sorcerers, lizard heads, smoke. Weird, funny, ultra-stylish.",art:["#4a5a2e","#0e1208"],
-  editions:[{name:"23-vol edition — Soleil Manga",vols:23,price:8,mins:80,recommended:true}]},
- {id:"bladeimmortal",section:"wishlist",t:"L'Habitant de l'infini",a:"Hiroaki Samura",g:["historique","seinen"],status:"todo",series:"complete",
-  blurb:"An immortal samurai, blood, incredible linework. Violent and beautiful.",art:["#5a4a3a","#100c0a"],
-  editions:[
-   {name:"Deluxe (large format) — Casterman",vols:15,price:18,mins:180,recommended:true,note:"Double volumes, Japanese reading order."},
-   {name:"Standard edition, ~30 vols — Casterman/Sakka",vols:30,price:8,mins:90,note:"Older, some in Western reading order."}
-  ]}
+  editions:[{name:"23-vol edition — Soleil Manga",vols:23,price:8,mins:80,recommended:true}]}
 ];
 // Keep shelf section first (stable), suggestions after — for grouped headers
 SEED.forEach((m,i)=>m.__ord=i);
