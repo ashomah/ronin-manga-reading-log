@@ -17,6 +17,10 @@ factual and may reference French editions by name.
 
 - `index.html` — the entire app (HTML + CSS + JS in one file). Must stay named
   `index.html` at repo root for GitHub Pages.
+- `manifest.webmanifest` + `icon.svg` / `icon-{192,512,180}.png` — PWA / Add-to-
+  Home-Screen assets (the 読 seal on cinnabar; `icon-180.png` is the iOS
+  apple-touch-icon). The browser-tab favicon stays the inline 📚 in `<head>`.
+  These are the only non-single-file web assets (a PWA can't be one file).
 - `README.md` — user-facing setup/usage.
 - `CLAUDE.md` — this file.
 - `digest.py` — monthly Slack digest (NOT part of the web app). Parses the SEED
