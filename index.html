@@ -93,6 +93,18 @@
   .search{border:1px solid var(--line);background:var(--washi-2);border-radius:999px;
     padding:7px 14px;font-family:inherit;font-size:14px;min-width:180px;color:var(--ink)}
   .search:focus{outline:2px solid var(--cinnabar);outline-offset:1px}
+  .advbtn{font-family:ui-monospace,monospace;font-size:12px;border:1px solid var(--line);
+    background:transparent;color:var(--muted);padding:7px 13px;border-radius:999px;cursor:pointer;transition:.15s}
+  .advbtn:hover{background:var(--washi-2)}
+  .advbtn.on{background:var(--ink);color:var(--washi);border-color:var(--ink)}
+  .advanced{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 8px;padding:11px 14px;
+    background:var(--washi-2);border:1px dashed var(--line);border-radius:10px}
+  .advanced[hidden]{display:none}
+  .advanced .advlbl{font-family:ui-monospace,monospace;font-size:10px;text-transform:uppercase;
+    letter-spacing:.18em;color:var(--muted);margin-right:2px}
+  .advanced button{font-family:ui-monospace,monospace;font-size:12px;border:1px solid var(--line);
+    background:var(--washi);padding:8px 14px;border-radius:8px;cursor:pointer;color:var(--ink)}
+  .advanced button:hover{background:var(--ink);color:var(--washi)}
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:18px;margin-top:8px}
   .sechead{grid-column:1/-1;font-family:ui-monospace,monospace;font-size:13px;text-transform:uppercase;
     letter-spacing:.2em;color:var(--cinnabar-d);font-weight:700;padding:14px 2px 2px;
@@ -250,18 +262,19 @@
     <button class="chip" data-f="complete">Completed series</button>
     <div class="spacer"></div>
     <input class="search" id="search" placeholder="Search…">
+    <button class="advbtn" id="advToggle" title="Backup, import, reset and restore">⚙ Advanced</button>
+  </div>
+  <div class="advanced" id="advPanel" hidden>
+    <span class="advlbl">Data</span>
+    <button id="export">⬇ Export (JSON)</button>
+    <button id="import">⬆ Import</button>
+    <button id="reset">↺ Reset</button>
+    <button id="restore" title="Undo the last schema migration">⟲ Restore (pre-migration)</button>
+    <input type="file" id="file" accept="application/json" hidden>
   </div>
   <div class="grid" id="grid"></div>
   <footer>
-    <b>Where is my data?</b> Your progress and edition choices are saved in your browser's local storage (not in the file itself).<br>
-    Export to JSON now and then to keep a portable backup.
-    <div class="io">
-      <button id="export">⬇ Export (JSON)</button>
-      <button id="import">⬆ Import</button>
-      <button id="reset">↺ Reset</button>
-      <button id="restore" title="Undo the last schema migration">⟲ Restore (pre-migration)</button>
-      <input type="file" id="file" accept="application/json" hidden>
-    </div>
+    <b>Where is my data?</b> Your progress and edition choices are saved in your browser's local storage (not in the file itself). Use <b>⚙ Advanced</b> (top) to export a JSON backup, or to import, reset or restore.
   </footer>
 </div>
 <script>
@@ -852,6 +865,11 @@ document.getElementById("themeBtn").onclick=()=>{
 };
 setThemeBtn();
 document.getElementById("restore").onclick=restoreBackup;
+document.getElementById("advToggle").onclick=e=>{
+  const p=document.getElementById("advPanel");
+  p.hidden=!p.hidden;
+  e.currentTarget.classList.toggle("on",!p.hidden);
+};
 // First-run seeding: pre-fill owned/read/rating from your real inventory
 (function seed(){
   if(state.__seededV2)return;  // v2 seed = real inventory
