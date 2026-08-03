@@ -96,8 +96,13 @@ progress is keyed by id and stored separately.
   `__order`, the custom display order — an array of ids in `state`).
 - Sync engine: `gh()`, `schedulePush()`, `pushNow()`, `pullNow()`,
   `setupSync()`. Classic GitHub token with **only `gist` scope**; token + gistId
-  in localStorage per device. Timestamp-based (`__updatedAt`) last-write-wins
-  with a "local is newer" warning.
+  in localStorage per device. Timestamp-based (`__updatedAt`) last-write-wins.
+  When a pull finds local newer than the cloud (a possibly-stale device), it
+  does NOT overwrite — it shows the **conflict bar** (`#syncConflict`) with two
+  explicit choices: `forcePull()` (⤓ Use cloud — adopt the cloud copy, keeping
+  its timestamp so the device won't look "newer" again) and `keepThisDevice()`
+  (⤒ bump local `__updatedAt` then push, making local authoritative). A footer
+  **⇩ Load cloud copy** button calls `forcePull()` from any device anytime.
 - `rec(id)` — gets/creates a user-data record with defaults
   `{ed, owned, read, img, rating, buy}`. Read defensively here when adding
   fields.

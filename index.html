@@ -59,6 +59,14 @@
   .syncbar button{font-family:ui-monospace,monospace;font-size:11px;border:1px solid var(--line);
     background:var(--washi);padding:6px 11px;border-radius:7px;cursor:pointer;color:var(--ink)}
   .syncbar button:hover{background:var(--ink);color:var(--washi)}
+  .conflictbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px;padding:9px 14px;
+    background:rgba(192,57,43,.08);border:1px solid rgba(192,57,43,.4);border-radius:10px;
+    font-size:12.5px;color:var(--cinnabar-d);font-family:ui-monospace,monospace}
+  .conflictbar[hidden]{display:none}
+  .conflictbar .spacer{flex:1}
+  .conflictbar button{font-family:ui-monospace,monospace;font-size:11px;border:1px solid var(--cinnabar);
+    background:var(--washi);padding:6px 11px;border-radius:7px;cursor:pointer;color:var(--ink)}
+  .conflictbar button:hover{background:var(--cinnabar);color:#fff}
   .started{margin-top:14px}
   .started:empty{display:none}
   .started-hd{font-family:ui-monospace,monospace;font-size:11px;text-transform:uppercase;letter-spacing:.18em;
@@ -222,6 +230,12 @@
       <button id="catUpdate" title="Ask Claude to refresh dates, suggest series, or add one — opens a PR on GitHub">⚡ Catalog</button>
       <button id="syncSetup">⚙ Set up sync</button>
     </div>
+    <div class="conflictbar" id="syncConflict" hidden>
+      <span>⚠ This device and the cloud have different data — pick which one is right.</span>
+      <div class="spacer"></div>
+      <button id="useCloud" title="Discard this device's data and load the cloud copy">⤓ Use cloud (discard local)</button>
+      <button id="keepLocal" title="Overwrite the cloud with this device's data">⤒ Keep this device</button>
+    </div>
   </header>
   <div class="started" id="started"></div>
   <div class="controls" id="controls">
@@ -245,6 +259,7 @@
       <button id="export">⬇ Export (JSON)</button>
       <button id="import">⬆ Import</button>
       <button id="reset">↺ Reset</button>
+      <button id="forcePullBtn" title="Discard this device's data and load the cloud copy">⇩ Load cloud copy</button>
       <button id="restore" title="Undo the last schema migration">⟲ Restore (pre-migration)</button>
       <input type="file" id="file" accept="application/json" hidden>
     </div>
@@ -440,6 +455,7 @@ function setSync(state_,msg){
   const dot=document.getElementById("syncdot"),m=document.getElementById("syncmsg");
   dot.className="dot "+state_; m.textContent=msg;
 }
+function setConflict(on){const el=document.getElementById("syncConflict");if(el)el.hidden=!on;}
 let pushTimer=null;
 function schedulePush(){
   if(!sync.token||!sync.gistId)return;
@@ -455,6 +471,7 @@ async function pushNow(){
       files:{[GIST_FILE]:{content:JSON.stringify(state,null,2)}}
     })});
     if(!r.ok)throw new Error("HTTP "+r.status);
+    setConflict(false);
     setSync("ok","Up to date · "+new Date().toLocaleTimeString());
   }catch(e){setSync("err","Push failed: "+e.message);}
 }
@@ -470,12 +487,39 @@ async function pullNow(silent){
     const remote=migrate(JSON.parse(raw));
     const localT=state.__updatedAt||0, remoteT=remote.__updatedAt||0;
     if(remoteT>localT || silent && !state.__seeded){
-      state=remote;localStorage.setItem(KEY,JSON.stringify(state));render();
+      state=remote;localStorage.setItem(KEY,JSON.stringify(state));setConflict(false);render();
       setSync("ok","Data pulled · "+new Date().toLocaleTimeString());
     }else if(localT>remoteT){
-      setSync("warn","Local copy is newer — remember to push.");
-    }else{setSync("ok","Already up to date.");}
+      // Don't silently trust the timestamp — this device may just be stale.
+      setSync("warn","This device and the cloud differ — choose below.");
+      setConflict(true);
+    }else{setConflict(false);setSync("ok","Already up to date.");}
   }catch(e){setSync("err","Pull failed: "+e.message);}
+}
+// Force pull: adopt the cloud copy regardless of timestamps (keeps the cloud's
+// __updatedAt so this device won't then look "newer"). The fix for a stale device.
+async function forcePull(){
+  if(!sync.token||!sync.gistId){alert("Set up sync first.");return;}
+  try{
+    setSync("busy","Loading cloud copy…");
+    const r=await gh("/gists/"+sync.gistId);
+    if(!r.ok)throw new Error("HTTP "+r.status);
+    const g=await r.json();
+    const raw=g.files?.[GIST_FILE]?.content;
+    if(!raw){setSync("warn","Cloud copy is empty — nothing to load.");return;}
+    state=migrate(JSON.parse(raw));
+    localStorage.setItem(KEY,JSON.stringify(state));
+    setConflict(false);render();
+    setSync("ok","Cloud copy loaded · "+new Date().toLocaleTimeString());
+  }catch(e){setSync("err","Load failed: "+e.message);}
+}
+// Keep this device: make local authoritative (bump its timestamp) then overwrite
+// the cloud, so other devices adopt it cleanly on their next pull.
+function keepThisDevice(){
+  state.__updatedAt=Date.now();
+  localStorage.setItem(KEY,JSON.stringify(state));
+  setConflict(false);
+  pushNow();
 }
 async function setupSync(){
   const tok=prompt("Paste your GitHub token (classic, 'gist' scope only):",sync.token||"");
@@ -794,6 +838,9 @@ document.getElementById("reset").onclick=()=>{if(confirm("Reset everything?")){s
 document.getElementById("syncSetup").onclick=setupSync;
 document.getElementById("syncPush").onclick=pushNow;
 document.getElementById("syncPull").onclick=()=>pullNow(false);
+document.getElementById("useCloud").onclick=()=>{if(confirm("Discard THIS device's data and load the cloud copy? This can't be undone."))forcePull();};
+document.getElementById("keepLocal").onclick=()=>{if(confirm("Overwrite the cloud with THIS device's data?"))keepThisDevice();};
+document.getElementById("forcePullBtn").onclick=()=>{if(confirm("Discard THIS device's data and load the cloud copy? This can't be undone."))forcePull();};
 document.getElementById("catUpdate").onclick=catalogMenu;
 /* ── Light / dark theme (per-device, not synced) ── */
 const THEME_KEY="ronin_theme";
