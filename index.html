@@ -266,10 +266,10 @@
   </div>
   <div class="advanced" id="advPanel" hidden>
     <span class="advlbl">Data</span>
-    <button id="export">⬇ Export (JSON)</button>
-    <button id="import">⬆ Import</button>
-    <button id="reset">↺ Reset</button>
-    <button id="restore" title="Undo the last schema migration">⟲ Restore (pre-migration)</button>
+    <button id="export" title="Download all your data (owned/read counts, ratings, edition choices, order) as a JSON file. Use it to keep an offline backup or move to another browser/device.">⬇ Export (JSON)</button>
+    <button id="import" title="Load data from a JSON file you exported earlier. Replaces this device's current data — use to restore a backup or set up a new device.">⬆ Import</button>
+    <button id="reset" title="Erase all your progress on this device (owned/read counts, ratings, buy list, order). Cannot be undone — export a backup first.">↺ Reset</button>
+    <button id="restore" title="Roll back the last automatic data-format upgrade to how your data looked just before it. Use only if an app update made your data look wrong.">⟲ Restore (pre-migration)</button>
     <input type="file" id="file" accept="application/json" hidden>
   </div>
   <div class="grid" id="grid"></div>
