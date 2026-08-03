@@ -93,10 +93,7 @@
   .search{border:1px solid var(--line);background:var(--washi-2);border-radius:999px;
     padding:7px 14px;font-family:inherit;font-size:14px;min-width:180px;color:var(--ink)}
   .search:focus{outline:2px solid var(--cinnabar);outline-offset:1px}
-  .advbtn{font-family:ui-monospace,monospace;font-size:12px;border:1px solid var(--line);
-    background:transparent;color:var(--muted);padding:7px 13px;border-radius:999px;cursor:pointer;transition:.15s}
-  .advbtn:hover{background:var(--washi-2)}
-  .advbtn.on{background:var(--ink);color:var(--washi);border-color:var(--ink)}
+  .syncbar button.on{background:var(--ink);color:var(--washi);border-color:var(--ink)}
   .advanced{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 8px;padding:11px 14px;
     background:var(--washi-2);border:1px dashed var(--line);border-radius:10px}
   .advanced[hidden]{display:none}
@@ -241,6 +238,7 @@
       <button id="syncPush" title="Push to GitHub">⤒ Push</button>
       <button id="catUpdate" title="Ask Claude to refresh dates, suggest series, or add one — opens a PR on GitHub">⚡ Catalog</button>
       <button id="syncSetup">⚙ Set up sync</button>
+      <button id="advToggle" title="Backup, import, reset and restore your data">🛠 Advanced</button>
     </div>
     <div class="conflictbar" id="syncConflict" hidden>
       <span>⚠ This device and the cloud have different data — pick which one is right.</span>
@@ -249,6 +247,14 @@
       <button id="keepLocal" title="Overwrite the cloud with this device's data">⤒ Keep this device</button>
     </div>
   </header>
+  <div class="advanced" id="advPanel" hidden>
+    <span class="advlbl">Data</span>
+    <button id="export" title="Download all your data (owned/read counts, ratings, edition choices, order) as a JSON file. Use it to keep an offline backup or move to another browser/device.">⬇ Export (JSON)</button>
+    <button id="import" title="Load data from a JSON file you exported earlier. Replaces this device's current data — use to restore a backup or set up a new device.">⬆ Import</button>
+    <button id="reset" title="Erase all your progress on this device (owned/read counts, ratings, buy list, order). Cannot be undone — export a backup first.">↺ Reset</button>
+    <button id="restore" title="Roll back the last automatic data-format upgrade to how your data looked just before it. Use only if an app update made your data look wrong.">⟲ Restore (pre-migration)</button>
+    <input type="file" id="file" accept="application/json" hidden>
+  </div>
   <div class="started" id="started"></div>
   <div class="controls" id="controls">
     <button class="chip on" data-f="all">All</button>
@@ -262,15 +268,6 @@
     <button class="chip" data-f="complete">Completed series</button>
     <div class="spacer"></div>
     <input class="search" id="search" placeholder="Search…">
-    <button class="advbtn" id="advToggle" title="Backup, import, reset and restore">⚙ Advanced</button>
-  </div>
-  <div class="advanced" id="advPanel" hidden>
-    <span class="advlbl">Data</span>
-    <button id="export" title="Download all your data (owned/read counts, ratings, edition choices, order) as a JSON file. Use it to keep an offline backup or move to another browser/device.">⬇ Export (JSON)</button>
-    <button id="import" title="Load data from a JSON file you exported earlier. Replaces this device's current data — use to restore a backup or set up a new device.">⬆ Import</button>
-    <button id="reset" title="Erase all your progress on this device (owned/read counts, ratings, buy list, order). Cannot be undone — export a backup first.">↺ Reset</button>
-    <button id="restore" title="Roll back the last automatic data-format upgrade to how your data looked just before it. Use only if an app update made your data look wrong.">⟲ Restore (pre-migration)</button>
-    <input type="file" id="file" accept="application/json" hidden>
   </div>
   <div class="grid" id="grid"></div>
   <footer>
