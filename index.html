@@ -259,7 +259,6 @@
       <button id="export">⬇ Export (JSON)</button>
       <button id="import">⬆ Import</button>
       <button id="reset">↺ Reset</button>
-      <button id="forcePullBtn" title="Discard this device's data and load the cloud copy">⇩ Load cloud copy</button>
       <button id="restore" title="Undo the last schema migration">⟲ Restore (pre-migration)</button>
       <input type="file" id="file" accept="application/json" hidden>
     </div>
@@ -840,7 +839,6 @@ document.getElementById("syncPush").onclick=pushNow;
 document.getElementById("syncPull").onclick=()=>pullNow(false);
 document.getElementById("useCloud").onclick=()=>{if(confirm("Discard THIS device's data and load the cloud copy? This can't be undone."))forcePull();};
 document.getElementById("keepLocal").onclick=()=>{if(confirm("Overwrite the cloud with THIS device's data?"))keepThisDevice();};
-document.getElementById("forcePullBtn").onclick=()=>{if(confirm("Discard THIS device's data and load the cloud copy? This can't be undone."))forcePull();};
 document.getElementById("catUpdate").onclick=catalogMenu;
 /* ── Light / dark theme (per-device, not synced) ── */
 const THEME_KEY="ronin_theme";
