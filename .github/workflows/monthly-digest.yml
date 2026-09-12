@@ -40,4 +40,27 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.RONIN_GIST_TOKEN }}
           RONIN_GIST_ID: ${{ secrets.RONIN_GIST_ID }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          # Incidents go to the shared #incidents channel, never to the digest
+          # channel — a monthly job that fails silently is late by a month.
+          SLACK_ALERT_WEBHOOK_URL: ${{ secrets.SLACK_ALERT_WEBHOOK_URL }}
         run: python digest.py
+
+      # A step that fails before the Python starts never reaches guard().
+      - name: Report a failure that never reached the script
+        if: failure()
+        env:
+          SLACK_ALERT_WEBHOOK_URL: ${{ secrets.SLACK_ALERT_WEBHOOK_URL }}
+        run: |
+          pip install "automation-core @ git+https://github.com/ashomah/automation-core.git@main" 2>/dev/null || true
+          python - <<'PY'
+          try:
+              from automation_core import alerts
+          except ImportError:
+              raise SystemExit(0)
+          alerts.send("Workflow failed before the digest ran",
+              "A step failed outside digest.py — checkout, pip install, or the "
+              "runner. No digest this month.",
+              process="ronin / monthly-digest",
+              action="Open the run log. If pip failed, check "
+                     "AUTOMATION_CORE_TOKEN has not expired.")
+          PY

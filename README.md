@@ -87,3 +87,51 @@ Save**. Your URL appears after ~1 minute.
   hasn't finished building.
 - **Sync dot won't turn green** → the token is missing the `gist` scope;
   regenerate with that box checked.
+
+## Incident alerts → `#incidents`
+
+Both automations here fail quietly by nature. The digest runs **twelve times a
+year**, so a broken month is invisible until the next one is due. The catalog
+update is triggered from a button in the app, where the person who pressed it
+never sees the Actions tab and a run that changed nothing looks exactly like a
+run that worked.
+
+Alerts go through [`automation_core.alerts`](https://github.com/ashomah/automation-core)
+to the shared `#incidents` Slack channel, which this repo, `level-up`,
+`career-coach` and `job-search-agent` all post into. Every alert names its
+process, links the failing run, and says what to do.
+
+### What alerts
+
+**`Monthly digest (Slack)`** — cron `0 8 1 * *`
+
+| Alert | Severity | Trigger | Why it is invisible otherwise |
+|---|---|---|---|
+| Crashed | 🔴 | Any unhandled exception in `digest.py` | Twelve runs a year — a red tick goes unseen for a month |
+| `RONIN_GIST_ID` is not set | 🔴 | The secret is missing or was rotated | Exits 2 with no Slack message at all |
+| Parsed zero series from the catalog | 🟠 | `parse_catalog()` returned nothing | The catalog is scraped out of `index.html`; a markup change breaks it silently and the digest reports an empty library |
+| Workflow failed before the digest ran | 🔴 | checkout / pip / runner failed | Never reaches Python |
+
+The snapshot is only advanced *after* a successful post, so a failed month
+re-runs cleanly and still produces the correct diff.
+
+**`Catalog update (Claude)`** — `repository_dispatch` from the app, or manual
+
+| Alert | Severity | Trigger | Why it is invisible otherwise |
+|---|---|---|---|
+| **Ran and changed nothing** | 🟠 | Claude finished and left no edits to commit | Triggered from the app, where this is indistinguishable from success. Usually means it hit `--max-turns 60` |
+| Catalog update failed | 🔴 | The Claude run or the commit step failed | `index.html` is unchanged on main and nobody is told |
+
+### Secrets this needs
+
+| Secret | For |
+|---|---|
+| `SLACK_WEBHOOK_URL` | The digest channel |
+| `SLACK_ALERT_WEBHOOK_URL` | The shared `#incidents` channel. Same value in every repo |
+| `AUTOMATION_CORE_TOKEN` | Reading the private `automation-core` repo from CI |
+| `RONIN_GIST_ID`, `RONIN_GIST_TOKEN` | The private gist holding reading data |
+| `ANTHROPIC_API_KEY` | The catalog update |
+
+⚠️ **This repo is public.** Secrets are not exposed to forks, but keep alert
+*text* free of anything private — alerts name the process and the failure, never
+reading data or gist contents.

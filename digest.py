@@ -254,6 +254,9 @@ def _load(path: str) -> str:
         return f.read()
 
 
+PROCESS = "ronin / monthly-digest"
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Rōnin monthly catalog digest.")
     ap.add_argument("--dry-run", action="store_true",
@@ -291,6 +294,13 @@ def main() -> int:
     repo = os.environ.get("RONIN_REPO", DEFAULT_REPO)
     gist_id = os.environ.get("RONIN_GIST_ID")
     if not gist_id:
+        from automation_core import alerts
+        alerts.send("RONIN_GIST_ID is not set",
+                    "The digest cannot read the catalog snapshot without it. "
+                    "Nothing was posted this month.",
+                    process=PROCESS,
+                    action="Check the RONIN_GIST_ID secret still exists on the "
+                           "repository.")
         print("RONIN_GIST_ID not set.", file=sys.stderr)
         return 2
 
@@ -303,6 +313,19 @@ def main() -> int:
 
     catalog = parse_catalog(html)
     progress = read_progress(state)
+
+    # This job runs twelve times a year, so a parse that silently returns
+    # nothing would post an empty digest for a month before anyone noticed. The
+    # catalog is scraped out of index.html; a markup change breaks it quietly.
+    if not catalog:
+        from automation_core import alerts
+        alerts.send("Parsed zero series from the catalog",
+                    f"`{INDEX_PATH}` was fetched but the SEED catalog yielded no "
+                    "entries. The digest would report an empty library.",
+                    severity="warn", process=PROCESS,
+                    action="Check the SEED block in index.html still matches what "
+                           "`parse_catalog()` expects — a markup change breaks "
+                           "this silently.")
     blocks = build_blocks(diff(prev, catalog, progress), today)
 
     if not args.no_slack:
@@ -319,4 +342,12 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    from automation_core import alerts
+
+    # Twelve runs a year. A failure that only shows as a red tick in the Actions
+    # tab is a failure nobody sees until the digest is two months late.
+    with alerts.guard(PROCESS,
+                      action="No digest was posted this month. The snapshot was "
+                             "not advanced either, so a re-run still produces the "
+                             "correct diff."):
+        raise SystemExit(main())
