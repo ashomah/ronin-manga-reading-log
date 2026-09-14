@@ -85,49 +85,52 @@ jobs:
 
       # This job is triggered from the app by pressing a button, so the person
       # who started it is waiting for a result and has no view of the Actions
-      # tab. Both outcomes below are otherwise invisible to them.
+      # tab. A run where Claude changed nothing looks identical to success.
+      # No python, no pip, no token: this job never installs automation-core,
+      # and an alert must not depend on anything that can itself fail.
       - name: Report a run that changed nothing
         if: success() && steps.commit.outputs.committed != 'true'
         env:
           SLACK_ALERT_WEBHOOK_URL: ${{ secrets.SLACK_ALERT_WEBHOOK_URL }}
-          AUTOMATION_CORE_TOKEN: ${{ secrets.AUTOMATION_CORE_TOKEN }}
         run: |
-          # This job has no setup-python step and never installs automation-core,
-          # so fetch it here. It is a private repo, hence the token rewrite.
-          git config --global url."https://x-access-token:${AUTOMATION_CORE_TOKEN}@github.com/".insteadOf "https://github.com/"
-          python3 -m pip install --quiet "automation-core @ git+https://github.com/ashomah/automation-core.git@main" 2>/dev/null || true
-          python3 - <<'PY'
-          try:
-              from automation_core import alerts
-          except ImportError:
-              raise SystemExit(0)
-          alerts.heartbeat("ronin / catalog-update", ok=False,
-              detail="Claude ran to completion and left no edits in the working "
-                     "tree, so nothing was committed. Triggered from the app, "
-                     "where this looks identical to a successful update.",
-              action="Check the run log for what Claude decided. If it hit "
-                     "--max-turns 60 the task was too large for one run.")
-          PY
+          if [ -z "$SLACK_ALERT_WEBHOOK_URL" ]; then
+            echo "SLACK_ALERT_WEBHOOK_URL not set — incident not posted"; exit 0
+          fi
+          RUN_URL="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          cat > /tmp/alert.json <<JSON
+          {"blocks": [
+            {"type": "header", "text": {"type": "plain_text", "text": "🟠 Completed, but produced no output", "emoji": true}},
+            {"type": "context", "elements": [{"type": "mrkdwn", "text": "*ronin / catalog-update*"}]},
+            {"type": "section", "text": {"type": "mrkdwn", "text": "Claude ran to completion and left no edits in the working tree, so nothing was committed. Triggered from the app, where this looks identical to a successful update."}},
+            {"type": "section", "text": {"type": "mrkdwn", "text": "*What to do:* Check the run log for what Claude decided. If it hit --max-turns 60 the task was too large for one run."}},
+            {"type": "context", "elements": [{"type": "mrkdwn", "text": "<${RUN_URL}|${GITHUB_REPOSITORY} run ${GITHUB_RUN_ID}>"}]}
+          ]}
+          JSON
+          curl -sS -X POST -H 'Content-Type: application/json' --data @/tmp/alert.json "$SLACK_ALERT_WEBHOOK_URL" \
+            && echo "incident posted" || echo "could not post the incident"
 
-      - name: Report a failed catalog update
+      # The last-resort alert. It must not depend on anything that can itself
+      # fail — on 2026-09-13 the missing AUTOMATION_CORE_TOKEN broke pip, and the
+      # previous version of this step tried to pip-install the alerter to report
+      # it, could not, and exited 0 in silence. So: curl and the webhook, nothing
+      # else. Never raises; a failed alert must not mask the original failure.
+      - name: "Report a failure to #incidents"
         if: failure()
         env:
           SLACK_ALERT_WEBHOOK_URL: ${{ secrets.SLACK_ALERT_WEBHOOK_URL }}
-          AUTOMATION_CORE_TOKEN: ${{ secrets.AUTOMATION_CORE_TOKEN }}
         run: |
-          # This job has no setup-python step and never installs automation-core,
-          # so fetch it here. It is a private repo, hence the token rewrite.
-          git config --global url."https://x-access-token:${AUTOMATION_CORE_TOKEN}@github.com/".insteadOf "https://github.com/"
-          python3 -m pip install --quiet "automation-core @ git+https://github.com/ashomah/automation-core.git@main" 2>/dev/null || true
-          python3 - <<'PY'
-          try:
-              from automation_core import alerts
-          except ImportError:
-              raise SystemExit(0)
-          alerts.send("Catalog update failed",
-              "The Claude run or the commit step failed. index.html is "
-              "unchanged on main.",
-              process="ronin / catalog-update",
-              action="Open the run log. A malformed edit to index.html is the "
-                     "usual cause — the file must stay a single valid document.")
-          PY
+          if [ -z "$SLACK_ALERT_WEBHOOK_URL" ]; then
+            echo "SLACK_ALERT_WEBHOOK_URL not set — incident not posted"; exit 0
+          fi
+          RUN_URL="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          cat > /tmp/alert.json <<JSON
+          {"blocks": [
+            {"type": "header", "text": {"type": "plain_text", "text": "🔴 Catalog update failed", "emoji": true}},
+            {"type": "context", "elements": [{"type": "mrkdwn", "text": "*ronin / catalog-update*"}]},
+            {"type": "section", "text": {"type": "mrkdwn", "text": "The Claude run or the commit step failed. index.html is unchanged on main."}},
+            {"type": "section", "text": {"type": "mrkdwn", "text": "*What to do:* Open the run log. A malformed edit to index.html is the usual cause — the file must stay a single valid document."}},
+            {"type": "context", "elements": [{"type": "mrkdwn", "text": "<${RUN_URL}|${GITHUB_REPOSITORY} run ${GITHUB_RUN_ID}>"}]}
+          ]}
+          JSON
+          curl -sS -X POST -H 'Content-Type: application/json' --data @/tmp/alert.json "$SLACK_ALERT_WEBHOOK_URL" \
+            && echo "incident posted" || echo "could not post the incident; the red tick stands"

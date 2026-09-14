@@ -26,8 +26,17 @@ jobs:
         env:
           AUTOMATION_CORE_TOKEN: ${{ secrets.AUTOMATION_CORE_TOKEN }}
         run: |
-          # automation-core is private; rewrite github.com HTTPS to carry a
-          # token that can read it so the git+https requirement resolves.
+          # Fail here, loudly, if the secret is missing. With an EMPTY token the
+          # insteadOf rewrite below still applies and silently corrupts every
+          # github.com URL for the rest of the job — the 2026-09-13 run lost its
+          # own checkout to exactly that. A blank secret is a configuration
+          # error, not a transient one, so say what to do.
+          if [ -z "${AUTOMATION_CORE_TOKEN}" ]; then
+            echo "::error::AUTOMATION_CORE_TOKEN is not set on this repository. automation-core is private and cannot be installed without it. Add it with: gh secret set AUTOMATION_CORE_TOKEN -R ${GITHUB_REPOSITORY}"
+            exit 1
+          fi
+          # automation-core is private; rewrite github.com HTTPS to carry a token
+          # that can read it so the git+https requirement resolves.
           git config --global url."https://x-access-token:${AUTOMATION_CORE_TOKEN}@github.com/".insteadOf "https://github.com/"
 
       - name: Install dependencies
@@ -45,22 +54,28 @@ jobs:
           SLACK_ALERT_WEBHOOK_URL: ${{ secrets.SLACK_ALERT_WEBHOOK_URL }}
         run: python digest.py
 
-      # A step that fails before the Python starts never reaches guard().
-      - name: Report a failure that never reached the script
+      # The last-resort alert. It must not depend on anything that can itself
+      # fail — on 2026-09-13 the missing AUTOMATION_CORE_TOKEN broke pip, and the
+      # previous version of this step tried to pip-install the alerter to report
+      # it, could not, and exited 0 in silence. So: curl and the webhook, nothing
+      # else. Never raises; a failed alert must not mask the original failure.
+      - name: "Report a failure to #incidents"
         if: failure()
         env:
           SLACK_ALERT_WEBHOOK_URL: ${{ secrets.SLACK_ALERT_WEBHOOK_URL }}
         run: |
-          pip install "automation-core @ git+https://github.com/ashomah/automation-core.git@main" 2>/dev/null || true
-          python - <<'PY'
-          try:
-              from automation_core import alerts
-          except ImportError:
-              raise SystemExit(0)
-          alerts.send("Workflow failed before the digest ran",
-              "A step failed outside digest.py — checkout, pip install, or the "
-              "runner. No digest this month.",
-              process="ronin / monthly-digest",
-              action="Open the run log. If pip failed, check "
-                     "AUTOMATION_CORE_TOKEN has not expired.")
-          PY
+          if [ -z "$SLACK_ALERT_WEBHOOK_URL" ]; then
+            echo "SLACK_ALERT_WEBHOOK_URL not set — incident not posted"; exit 0
+          fi
+          RUN_URL="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          cat > /tmp/alert.json <<JSON
+          {"blocks": [
+            {"type": "header", "text": {"type": "plain_text", "text": "🔴 Workflow failed before the digest ran", "emoji": true}},
+            {"type": "context", "elements": [{"type": "mrkdwn", "text": "*ronin / monthly-digest*"}]},
+            {"type": "section", "text": {"type": "mrkdwn", "text": "A step failed outside digest.py — checkout, pip install, or the runner. No digest this month."}},
+            {"type": "section", "text": {"type": "mrkdwn", "text": "*What to do:* Open the run log. If the *Authenticate pip* step failed, the AUTOMATION_CORE_TOKEN secret is missing or expired on this repo."}},
+            {"type": "context", "elements": [{"type": "mrkdwn", "text": "<${RUN_URL}|${GITHUB_REPOSITORY} run ${GITHUB_RUN_ID}>"}]}
+          ]}
+          JSON
+          curl -sS -X POST -H 'Content-Type: application/json' --data @/tmp/alert.json "$SLACK_ALERT_WEBHOOK_URL" \
+            && echo "incident posted" || echo "could not post the incident; the red tick stands"
