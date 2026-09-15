@@ -144,7 +144,8 @@ One Piece (classic Glénat, 1 owned), Akira (large B&W, 6, read), Berserk
 
 Suggestions/wishlist: Dragon Ball Super, Naruto, Vagabond, Vinland Saga,
 Monster, Pluto, Biomega/NOiSE, Dorohedoro, Blade of the Immortal (L'Habitant de
-l'infini).
+l'infini), Neon Genesis Evangelion, L'Attaque des Titans, Death Note, Bonne nuit
+Punpun (Oyasumi Punpun), I Am a Hero, The Strange House (変な家, ongoing).
 
 Buy list pre-ticked: fma, naruto, dbsuper.
 
