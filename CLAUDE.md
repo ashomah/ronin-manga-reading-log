@@ -146,13 +146,14 @@ Suggestions/wishlist: Dragon Ball Super, Naruto, Vagabond, Vinland Saga,
 Monster, Pluto, Biomega/NOiSE, Dorohedoro, Blade of the Immortal (L'Habitant de
 l'infini), Neon Genesis Evangelion, L'Attaque des Titans, Death Note, Bonne nuit
 Punpun (Oyasumi Punpun), I Am a Hero, The Strange House (変な家, ongoing),
-Tract (Shintarō Kago), Yuuan no Kanata (Nokuto Koike, ongoing).
+Tract (Shintarō Kago), Yuuan no Kanata (Nokuto Koike).
 
-Note: **Tract** and **Yuuan no Kanata** exist only in **Spanish** editions
-(Moztros / Kibook) — the user was browsing a Spanish shop — so their `editions`
-reference Spanish publishers, unlike the otherwise French-edition catalog. If the
-collection standardises on a language, revisit these (and re-check others for a
-Spanish edition).
+**Edition-language preference: French first, then English, then other.** When
+adding a title, search all three and pick the best available in that order. Most
+of the catalog uses French editions; a few use English where no French edition
+exists — **Tract** (Hollow Press, English) and **Yuuan no Kanata** (Titan Manga,
+English; also Spanish via Kibook). Only fall back to Spanish/original if neither
+French nor English exists.
 
 Buy list pre-ticked: fma, naruto, dbsuper.
 
