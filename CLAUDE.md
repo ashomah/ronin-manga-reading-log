@@ -145,7 +145,14 @@ One Piece (classic Glénat, 1 owned), Akira (large B&W, 6, read), Berserk
 Suggestions/wishlist: Dragon Ball Super, Naruto, Vagabond, Vinland Saga,
 Monster, Pluto, Biomega/NOiSE, Dorohedoro, Blade of the Immortal (L'Habitant de
 l'infini), Neon Genesis Evangelion, L'Attaque des Titans, Death Note, Bonne nuit
-Punpun (Oyasumi Punpun), I Am a Hero, The Strange House (変な家, ongoing).
+Punpun (Oyasumi Punpun), I Am a Hero, The Strange House (変な家, ongoing),
+Tract (Shintarō Kago), Yuuan no Kanata (Nokuto Koike, ongoing).
+
+Note: **Tract** and **Yuuan no Kanata** exist only in **Spanish** editions
+(Moztros / Kibook) — the user was browsing a Spanish shop — so their `editions`
+reference Spanish publishers, unlike the otherwise French-edition catalog. If the
+collection standardises on a language, revisit these (and re-check others for a
+Spanish edition).
 
 Buy list pre-ticked: fma, naruto, dbsuper.
 
