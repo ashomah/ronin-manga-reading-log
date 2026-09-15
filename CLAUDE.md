@@ -155,6 +155,14 @@ exists — **Tract** (Hollow Press, English) and **Yuuan no Kanata** (Titan Mang
 English; also Spanish via Kibook). Only fall back to Spanish/original if neither
 French nor English exists.
 
+**Uncensored priority.** The reader wants to read as close to the original as
+possible. If the preferred-language edition is **censored** (trimmed gore/nudity,
+redrawn panels, altered scenes — common in some FR releases), also find an
+**uncensored** edition (a later deluxe/complete reprint, the English/original, or
+the Japanese) and prefer it — or list it as an alternative `editions[]` entry
+with a `note` flagging what the censored one cuts, so the reader can choose. When
+in doubt about a series' censorship, check before committing.
+
 Buy list pre-ticked: fma, naruto, dbsuper.
 
 **Known TODO:** real read counts for Gantz, Blame!, One Piece were left at 0 and
