@@ -150,6 +150,27 @@
   .edsel select{font-family:inherit;font-size:13px;padding:7px 10px;border-radius:8px;
     border:1px solid var(--line);background:var(--washi);color:var(--ink);width:100%}
   .ednote{font-size:11.5px;color:var(--cinnabar-d);font-style:italic;border-left:2px solid var(--cinnabar);padding-left:9px}
+  /* ⓘ edition-compare popup */
+  .edinfo{cursor:pointer;color:var(--muted);font-size:12px;margin-left:3px;user-select:none}
+  .edinfo:hover{color:var(--cinnabar)}
+  .eddlg{border:1px solid var(--line);border-radius:14px;background:var(--washi-2);color:var(--ink);
+    max-width:520px;width:calc(100% - 32px);padding:0;box-shadow:var(--shadow)}
+  .eddlg::backdrop{background:rgba(0,0,0,.5)}
+  .eddlg-hd{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:13px 16px;border-bottom:1px solid var(--line);font-weight:800;font-size:15px}
+  .eddlg-x{border:1px solid var(--line);background:var(--washi);color:var(--ink);border-radius:8px;
+    cursor:pointer;font-family:ui-monospace,monospace;font-size:12px;padding:4px 9px;flex:none}
+  .eddlg-x:hover{background:var(--ink);color:var(--washi)}
+  #edDlgBody{padding:6px 16px 16px;max-height:70vh;overflow:auto}
+  .ed-row{padding:11px 0;border-bottom:1px dashed var(--line)}
+  .ed-row:last-child{border-bottom:none}
+  .ed-name{font-weight:700;font-size:13.5px}
+  .ed-meta{font-family:ui-monospace,monospace;font-size:11.5px;color:var(--muted);margin-top:3px}
+  .ed-note{font-size:12.5px;color:var(--muted);margin-top:5px;line-height:1.45}
+  .ed-rec,.ed-own{font-size:9px;font-family:ui-monospace,monospace;text-transform:uppercase;
+    letter-spacing:.08em;padding:2px 6px;border-radius:5px;margin-left:6px;white-space:nowrap}
+  .ed-rec{background:rgba(176,141,79,.16);color:#8a6d33;box-shadow:inset 0 0 0 1px rgba(176,141,79,.4)}
+  .ed-own{background:rgba(63,107,94,.18);color:var(--jade);box-shadow:inset 0 0 0 1px rgba(63,107,94,.4)}
   .bestrec{font-size:11.5px;font-family:ui-monospace,monospace;color:#8a6d33;background:rgba(176,141,79,.12);
     border:1px solid rgba(176,141,79,.35);border-radius:7px;padding:6px 10px;letter-spacing:.02em}
   .bestrec.own{color:var(--jade);background:rgba(63,107,94,.1);border-color:rgba(63,107,94,.3)}
@@ -205,7 +226,7 @@
   }
   [data-theme="dark"] .blurb{color:#c7bfae}
   [data-theme="dark"] .b.genre{background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1px rgba(255,255,255,.13)}
-  [data-theme="dark"] .b.ongoing,[data-theme="dark"] .bestrec,[data-theme="dark"] .rel .lab{color:#d8b873}
+  [data-theme="dark"] .b.ongoing,[data-theme="dark"] .bestrec,[data-theme="dark"] .rel .lab,[data-theme="dark"] .ed-rec{color:#d8b873}
   [data-theme="dark"] .rate .star{color:rgba(255,255,255,.26)}
   [data-theme="dark"] .prog .bar{background:rgba(255,255,255,.1);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
   [data-theme="dark"] .sbar,[data-theme="dark"] .seriesprog .sbar{background:rgba(255,255,255,.1)}
@@ -274,6 +295,10 @@
     <b>Where is my data?</b> Your progress and edition choices are saved in your browser's local storage (not in the file itself). Use <b>⚙ Advanced</b> (top) to export a JSON backup, or to import, reset or restore.
   </footer>
 </div>
+<dialog id="edDlg" class="eddlg">
+  <div class="eddlg-hd"><span id="edDlgTitle"></span><button class="eddlg-x" onclick="document.getElementById('edDlg').close()">✕</button></div>
+  <div id="edDlgBody"></div>
+</dialog>
 <script>
 /* ── Editions: each title has 1+ editions. Marked verify:true where
    the publication date / volume count should be re-checked live.
@@ -377,7 +402,10 @@ const SEED=[
   editions:[{name:"Standard edition, 29 vols — Kurokawa",vols:29,price:7.65,mins:90,recommended:true,note:"Completed series."}]},
  {id:"dorohedoro",section:"wishlist",t:"Dorohedoro",a:"Q Hayashida",g:["dark fantasy","sf","seinen"],status:"todo",series:"complete",
   blurb:"Sorcerers, lizard heads, smoke. Weird, funny, ultra-stylish.",art:["#4a5a2e","#0e1208"],
-  editions:[{name:"23-vol edition — Soleil Manga",vols:23,price:8,mins:80,recommended:true}]},
+  editions:[
+   {name:"Chaos Edition (2-in-1 remaster), 12 vols — Soleil Manga",vols:12,price:15,mins:160,recommended:true,note:"2025 remaster: larger 2-in-1 format, better paper/print, full original content. The one to get."},
+   {name:"Original edition, 23 vols — Soleil Manga",vols:23,price:8,mins:80,note:"First FR run (2003–2019), standard pocket format. Complete/uncut but lower print quality."}
+  ]},
  {id:"evangelion",section:"wishlist",t:"Neon Genesis Evangelion",a:"Yoshiyuki Sadamoto",g:["sf","mecha","seinen"],status:"todo",series:"complete",
   blurb:"Teenage pilots, biomechanical angels and a great deal of trauma. The manga by the anime's character designer — bleaker and more intimate than the show.",art:["#5a2e6e","#0b0a12"],
   editions:[
@@ -737,7 +765,7 @@ function cardHTML(m,rankIdx,showBadge,canDrag){
           <span>🛒 On my buy list${r.buy?` · ${(((ed.vols-ow)*ed.price)).toFixed(0)} € to complete`:""}</span>
         </label>
         <div class="edsel">
-          <label>Edition owned</label>
+          <label>Edition owned <span class="edinfo" title="Compare editions" onclick="showEds('${m.id}')">ⓘ</span></label>
           <select onchange="setEd('${m.id}',this.selectedIndex)">
             ${m.editions.map((e,i)=>`<option ${i===r.ed?'selected':''}>${e.recommended?'★ ':''}${e.name} · ${e.vols} vols · ${e.price}€</option>`).join("")}
           </select>
@@ -829,6 +857,30 @@ function setImg(id){
   const v=prompt("Paste a cover image URL (leave empty for the generated motif):",cur);
   if(v!==null){rec(id).img=v.trim();save();render()}
 }
+// Edition comparison popup (ⓘ next to the edition picker). Lists every edition
+// with cost/time and its note, so you can pick the right one without cluttering
+// the card. Native <dialog> renders in the top layer — takes no page space.
+function showEds(id){
+  const m=SEED.find(s=>s.id===id);if(!m)return;
+  const dlg=document.getElementById("edDlg"), cur=rec(id).ed;
+  document.getElementById("edDlgTitle").textContent=m.t+" — editions";
+  document.getElementById("edDlgBody").innerHTML=m.editions.map((e,i)=>{
+    const total=(e.vols&&e.price)?` · ${(e.vols*e.price).toFixed(0)} € full`:"";
+    const hrs=(e.vols&&e.mins)?` · ${fmtH(e.vols*e.mins)} h`:"";
+    const tags=[e.recommended?'<span class="ed-rec">★ recommended</span>':"",
+                i===cur?'<span class="ed-own">✓ your edition</span>':""].join("");
+    return `<div class="ed-row${i===cur?' cur':''}">
+      <div class="ed-name">${e.name}${tags}</div>
+      <div class="ed-meta">${e.vols} vols · ${e.price}€/vol${total}${hrs}</div>
+      ${e.note?`<div class="ed-note">${e.note}</div>`:""}
+    </div>`;
+  }).join("");
+  dlg.showModal();
+}
+// Click on the backdrop (outside the dialog box) closes it.
+document.getElementById("edDlg").addEventListener("click",e=>{
+  if(e.target.id==="edDlg")e.target.close();
+});
 /* ── Drag-to-reorder ───────────────────────────────────────────
    Pointer-based (works with mouse and touch). Only active in the
    unfiltered "all" view, where every card is on screen, so the DOM

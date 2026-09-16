@@ -114,6 +114,11 @@ progress is keyed by id and stored separately.
   filtered/search view it's a flat list and each card shows a derived
   **owned/suggestion badge** instead of headers. Card HTML is built by
   `cardHTML(m, rank, showBadge, canDrag)`.
+- **Edition-compare popup**: a small `ⓘ` (`.edinfo`) next to the "Edition owned"
+  picker calls `showEds(id)`, which fills a shared native `<dialog id="edDlg">`
+  with every edition's cost/time and `note` (recommended ★ / your-edition ✓
+  tags) so you can pick without cluttering the card. Native `<dialog>` renders in
+  the top layer → zero page space; backdrop-click and ✕ close it.
 - **Drag-to-reorder** (`pointerdown` on a `.grip`, pointer-based so it works on
   touch) is active only in the grouped view, and is **constrained to within a
   group** (you can't drag a suggestion among owned titles — buying it promotes
