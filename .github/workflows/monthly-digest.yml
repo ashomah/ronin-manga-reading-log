@@ -69,7 +69,7 @@ jobs:
           fi
           RUN_URL="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
           cat > /tmp/alert.json <<JSON
-          {"blocks": [
+          {"text": "🔴 Workflow failed before the digest ran — ronin / monthly-digest", "blocks": [
             {"type": "header", "text": {"type": "plain_text", "text": "🔴 Workflow failed before the digest ran", "emoji": true}},
             {"type": "context", "elements": [{"type": "mrkdwn", "text": "*ronin / monthly-digest*"}]},
             {"type": "section", "text": {"type": "mrkdwn", "text": "A step failed outside digest.py — checkout, pip install, or the runner. No digest this month."}},

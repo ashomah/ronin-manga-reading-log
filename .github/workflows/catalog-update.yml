@@ -98,7 +98,7 @@ jobs:
           fi
           RUN_URL="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
           cat > /tmp/alert.json <<JSON
-          {"blocks": [
+          {"text": "🟠 Completed, but produced no output — ronin / catalog-update", "blocks": [
             {"type": "header", "text": {"type": "plain_text", "text": "🟠 Completed, but produced no output", "emoji": true}},
             {"type": "context", "elements": [{"type": "mrkdwn", "text": "*ronin / catalog-update*"}]},
             {"type": "section", "text": {"type": "mrkdwn", "text": "Claude ran to completion and left no edits in the working tree, so nothing was committed. Triggered from the app, where this looks identical to a successful update."}},
@@ -124,7 +124,7 @@ jobs:
           fi
           RUN_URL="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
           cat > /tmp/alert.json <<JSON
-          {"blocks": [
+          {"text": "🔴 Catalog update failed — ronin / catalog-update", "blocks": [
             {"type": "header", "text": {"type": "plain_text", "text": "🔴 Catalog update failed", "emoji": true}},
             {"type": "context", "elements": [{"type": "mrkdwn", "text": "*ronin / catalog-update*"}]},
             {"type": "section", "text": {"type": "mrkdwn", "text": "The Claude run or the commit step failed. index.html is unchanged on main."}},
