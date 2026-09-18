@@ -289,12 +289,11 @@ def main() -> int:
     # .env) only RONIN_GIST_TOKEN exists, so fall back to it.
     os.environ.setdefault("GITHUB_TOKEN", os.environ.get("RONIN_GIST_TOKEN", ""))
 
-    from automation_core import github, slack
+    from automation_core import github, slack, alerts
 
     repo = os.environ.get("RONIN_REPO", DEFAULT_REPO)
     gist_id = os.environ.get("RONIN_GIST_ID")
     if not gist_id:
-        from automation_core import alerts
         alerts.send("RONIN_GIST_ID is not set",
                     "The digest cannot read the catalog snapshot without it. "
                     "Nothing was posted this month.",
@@ -313,23 +312,12 @@ def main() -> int:
 
     catalog = parse_catalog(html)
     progress = read_progress(state)
-
-    # This job runs twelve times a year, so a parse that silently returns
-    # nothing would post an empty digest for a month before anyone noticed. The
-    # catalog is scraped out of index.html; a markup change breaks it quietly.
-    if not catalog:
-        from automation_core import alerts
-        alerts.send("Parsed zero series from the catalog",
-                    f"`{INDEX_PATH}` was fetched but the SEED catalog yielded no "
-                    "entries. The digest would report an empty library.",
-                    severity="warn", process=PROCESS,
-                    action="Check the SEED block in index.html still matches what "
-                           "`parse_catalog()` expects — a markup change breaks "
-                           "this silently.")
     blocks = build_blocks(diff(prev, catalog, progress), today)
 
+    posted = False
     if not args.no_slack:
         slack.post_blocks(blocks)
+        posted = True
         print("Posted digest to Slack.")
 
     if not args.no_save:
@@ -338,6 +326,21 @@ def main() -> int:
                            json.dumps(snap, indent=2, ensure_ascii=False),
                            description="Rōnin — monthly digest snapshot")
         print("Saved snapshot to gist.")
+
+    # Heartbeat: prove the digest actually delivered, not merely that the job
+    # exited 0. This job runs twelve times a year; a markup change in index.html
+    # makes parse_catalog() return zero series and the monthly post goes out
+    # empty — a silent failure under a green tick nobody would notice for a
+    # month. ok only when ≥1 series was parsed AND the post went out (`--no-slack`
+    # is a deliberate skip). Replaces the old bespoke empty-catalog warning.
+    alerts.heartbeat(PROCESS,
+                     ok=(len(catalog) >= 1 and (posted or args.no_slack)),
+                     detail="The digest ran but delivered nothing real: the SEED "
+                            "catalog parsed to zero series, so the monthly post "
+                            "was empty.",
+                     action="Check the SEED block in index.html still matches what "
+                            "parse_catalog() expects — a markup change breaks it "
+                            "silently.")
     return 0
 
 

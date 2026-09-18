@@ -109,11 +109,17 @@ process, links the failing run, and says what to do.
 |---|---|---|---|
 | Crashed | 🔴 | Any unhandled exception in `digest.py` | Twelve runs a year — a red tick goes unseen for a month |
 | `RONIN_GIST_ID` is not set | 🔴 | The secret is missing or was rotated | Exits 2 with no Slack message at all |
-| Parsed zero series from the catalog | 🟠 | `parse_catalog()` returned nothing | The catalog is scraped out of `index.html`; a markup change breaks it silently and the digest reports an empty library |
+| Ran but delivered nothing | 🟠 | An end-of-run `alerts.heartbeat`: the job exited 0 but parsed **zero series** (or the post never went out), so the monthly message was empty | The catalog is scraped out of `index.html`; a markup change breaks `parse_catalog()` silently and an empty digest looks just like a quiet month |
 | Workflow failed before the digest ran | 🔴 | checkout / pip / runner failed | Never reaches Python |
 
-The snapshot is only advanced *after* a successful post, so a failed month
-re-runs cleanly and still produces the correct diff.
+The workflow-level "failed before the digest ran" alert is **gated on the digest
+step's conclusion** (`if: failure() && steps.digest.conclusion != 'failure'`):
+when `digest.py` itself fails, its own `alerts.guard` posts the *Crashed* alert,
+and the workflow curl stays silent so one failure makes one post — not the two it
+used to. It still fires for failures *outside* Python (checkout, pip, token),
+because those never reach the guard. The snapshot is only advanced *after* a
+successful post, so a failed month re-runs cleanly and still produces the correct
+diff.
 
 **`Catalog update (Claude)`** — `repository_dispatch` from the app, or manual
 

@@ -43,6 +43,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Post monthly digest
+        id: digest
         env:
           # PAT with `gist` scope (+ `repo` only if this repo is private) so the
           # job can read the private Gist and read index.html.
@@ -60,7 +61,12 @@ jobs:
       # it, could not, and exited 0 in silence. So: curl and the webhook, nothing
       # else. Never raises; a failed alert must not mask the original failure.
       - name: "Report a failure to #incidents"
-        if: failure()
+        # Fire ONLY when the failure was OUTSIDE digest.py — checkout, pip, token,
+        # or the runner. When digest.py itself fails, its own alerts.guard already
+        # posts to #incidents; gating on the digest step's conclusion prevents a
+        # double post. A step that never ran (earlier failure) has conclusion ''
+        # (not 'failure'), so this still fires for pre-script failures.
+        if: failure() && steps.digest.conclusion != 'failure'
         env:
           SLACK_ALERT_WEBHOOK_URL: ${{ secrets.SLACK_ALERT_WEBHOOK_URL }}
         run: |
