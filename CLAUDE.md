@@ -45,6 +45,11 @@ project) for generic Slack/GitHub/Gist plumbing; all manga-specific logic
   only ever writes `ronin-data.json`).
 - "Available volumes" per series = the **recommended** edition's `vols` (else the
   first edition's). A bump month-over-month = "new volume released".
+- **Re-run idempotency:** right after a successful Slack post (before the snapshot
+  save) `digest.py` writes a `ronin-digest-posted.json` marker to the same Gist
+  holding the posted `year_month`. A re-run in the same month sees it and skips the
+  post (still saving the snapshot), so an auto-heal / manual re-run can't
+  double-post. A duplicate digest is only noise, so a same-month marker suffices.
 - Required Action secrets: `SLACK_WEBHOOK_URL`, `RONIN_GIST_ID`,
   `RONIN_GIST_TOKEN` (classic PAT, `gist` scope; add `repo` only if this repo is
   ever made private), `AUTOMATION_CORE_TOKEN` (read access to the private

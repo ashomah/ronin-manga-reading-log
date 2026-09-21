@@ -38,6 +38,12 @@ from typing import Any, Optional
 
 DATA_FILE = "ronin-data.json"
 SNAPSHOT_FILE = "ronin-digest-snapshot.json"
+# Idempotency marker: the year-month we last posted a digest for. Written to the
+# gist right after a successful Slack post, so an auto-heal / manual re-run in the
+# same month does not double-post (the snapshot alone can't guard this — it only
+# advances *after* the post, so a post-succeeded-then-save-failed run leaves it
+# stale and a re-run would post again).
+POSTED_FILE = "ronin-digest-posted.json"
 DEFAULT_REPO = "ashomah/ronin-manga-reading-log"
 INDEX_PATH = "index.html"
 
@@ -314,11 +320,36 @@ def main() -> int:
     progress = read_progress(state)
     blocks = build_blocks(diff(prev, catalog, progress), today)
 
+    # Idempotency for a re-run (auto-heal or a manual re-run in the Actions tab):
+    # if we already posted a digest for this year-month, don't post again — a
+    # duplicate monthly digest is pure noise. The marker lives in the gist, which
+    # persists across runs, so this needs no workflow change. A duplicate is only
+    # ever noise, so a same-month marker is a sufficient guard.
+    this_month = today.strftime("%Y-%m")
+    try:
+        marker = json.loads(github.get_gist(gist_id, filename=POSTED_FILE))
+    except github.GitHubError:
+        marker = {}
+    already_posted = marker.get("year_month") == this_month
+
     posted = False
-    if not args.no_slack:
+    if args.no_slack:
+        pass
+    elif already_posted:
+        posted = True  # treat as delivered; the month's digest is already out
+        print(f"Digest already posted for {this_month} — skipping the Slack post "
+              f"(idempotent re-run).")
+    else:
         slack.post_blocks(blocks)
         posted = True
         print("Posted digest to Slack.")
+        # Write the marker IMMEDIATELY after the post (before the snapshot save),
+        # so if the snapshot save below fails and the run is re-run, we don't
+        # double-post this month.
+        github.update_gist(gist_id, POSTED_FILE,
+                           json.dumps({"year_month": this_month,
+                                       "at": today.isoformat()}),
+                           description="Rōnin — digest posted marker")
 
     if not args.no_save:
         snap = make_snapshot(catalog, progress, today)

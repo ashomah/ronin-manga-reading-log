@@ -121,6 +121,14 @@ because those never reach the guard. The snapshot is only advanced *after* a
 successful post, so a failed month re-runs cleanly and still produces the correct
 diff.
 
+A re-run (auto-heal or a manual re-run) will not **double-post** the digest: right
+after a successful Slack post — and before the snapshot save — `digest.py` writes
+a `ronin-digest-posted.json` marker to the gist recording the posted year-month.
+On any later run in the same month it sees the marker and skips the post (still
+saving the snapshot). A duplicate monthly digest is only noise, so this same-month
+marker is guard enough. The marker lives in the gist (which persists across runs),
+so no workflow change is needed — unlike `level-up`, whose state is git-native.
+
 **`Catalog update (Claude)`** — `repository_dispatch` from the app, or manual
 
 | Alert | Severity | Trigger | Why it is invisible otherwise |
