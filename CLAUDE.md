@@ -156,7 +156,11 @@ Suggestions/wishlist: Dragon Ball Super, Naruto, Vagabond, Vinland Saga,
 Monster, Pluto, Biomega/NOiSE, Dorohedoro, Blade of the Immortal (L'Habitant de
 l'infini), Neon Genesis Evangelion, L'Attaque des Titans, Death Note, Bonne nuit
 Punpun (Oyasumi Punpun), I Am a Hero, The Strange House (変な家, ongoing),
-Tract (Shintarō Kago), Yuuan no Kanata (Nokuto Koike).
+Tract (Shintarō Kago), Yuuan no Kanata (Nokuto Koike), Baki (Keisuke Itagaki;
+`verify:true` — the Meian Perfect Edition reprint is still rolling out), Gunnm
+(Battle Angel Alita, Yukito Kishiro), Rainbow (George Abe / Masasumi Kakizaki),
+Le Sommet des Dieux (Jirô Taniguchi / Baku Yumemakura), Fire Punch (Tatsuki
+Fujimoto; `verify:true` — confirm the Burning Edition's 4 volumes are all out).
 
 **Edition-language preference: French first, then English, then other.** When
 adding a title, search all three and pick the best available in that order. Most
