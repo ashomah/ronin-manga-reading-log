@@ -160,7 +160,11 @@ Tract (Shintarō Kago), Yuuan no Kanata (Nokuto Koike), Baki (Keisuke Itagaki;
 `verify:true` — the Meian Perfect Edition reprint is still rolling out), Gunnm
 (Battle Angel Alita, Yukito Kishiro), Rainbow (George Abe / Masasumi Kakizaki),
 Le Sommet des Dieux (Jirô Taniguchi / Baku Yumemakura), Fire Punch (Tatsuki
-Fujimoto; `verify:true` — confirm the Burning Edition's 4 volumes are all out).
+Fujimoto; `verify:true` — confirm the Burning Edition's 4 volumes are all out),
+Gunnm — Last Order, Gunnm — Mars Chronicle (both Kishiro's direct sequels to
+Gunnm, both complete in France), Gunnm — Panzer Kunst Chronicle (Kishiro; the
+4th season — `verify:true`, no French edition yet, placeholder 0-vol entry
+until Glénat's planned May 2027 release).
 
 **Edition-language preference: French first, then English, then other.** When
 adding a title, search all three and pick the best available in that order. Most
