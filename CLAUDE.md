@@ -167,6 +167,16 @@ Gunnm, both complete in France), Gunnm — Panzer Kunst Chronicle (Kishiro; the
 until Glénat's planned May 2027 release), Dai Dark (Q Hayashida — same author
 as Dorohedoro; `verify:true`, ongoing, 9 tomes out in France as of Mar 2026).
 
+**Shintarō Kago deep dive (2026-10-24):** beyond Tract, added Dementia 21 (FR,
+Éditions Huber, 2 vols — the recommended entry point, far less graphic than his
+other work), Industrial Revolution and World War (Hollow Press, EN), Fraction
+(FR, Éditions IMHO), Parasitic City (Hollow Press EN serial, 7 issues so far,
+`verify:true`), The Princess / The Twelve Sisters of the Never-Ending Castle,
+and Day of the Flying Head (all Hollow Press EN). Blurbs carry a "Kago pick #N"
+tag recording relative priority (1=Dementia 21 … 4=deep cuts). NOT added:
+"Heartbreak Reincarnation" — that's by a different Hollow Press artist, Daisuke
+Ichiba, not Kago; an earlier pass mis-attributed it.
+
 **Edition-language preference: French first, then English, then other.** When
 adding a title, search all three and pick the best available in that order. Most
 of the catalog uses French editions; a few use English where no French edition
