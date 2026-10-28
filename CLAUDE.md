@@ -191,6 +191,36 @@ reissues (NOiSE as "Blame! Tome 0", €14.95; Biomega Deluxe 2-in-1, 3 vols,
 €14.95/vol) since they match the large format of the Blame! Master Edition the
 reader already owns.
 
+**"Recommended" edition audit (2026-10-28):** the reader asked why Death Note
+recommended the cheaper Standard over the Black Edition despite preferring
+premium formats everywhere else; checking the whole catalog (`vols×price` per
+edition) surfaced three real mistakes, now fixed:
+- **Death Note**: flipped to Black Edition (2-in-1) — genuine extras (bonus
+  pages/art, heavier paper), ~17% pricier total, matches the pattern elsewhere.
+- **Vagabond**: flipped to the Découverte edition (2-in-1) — it's cheaper in
+  total (€209 vs €296) *and* the nicer format. The old note calling Standard
+  "Best value" was simply wrong (compared per-volume price, missed that
+  Découverte combines 2 volumes per book).
+- **Dragon Ball**: flipped to Perfect Edition — the stated reason for
+  preferring Original ("B&W, Japanese reading order") doesn't actually
+  distinguish them; Perfect Edition is *also* B&W/Japanese-order (a faithful
+  Kanzenban reproduction), plus bonus colour pages and a more accurate
+  translation. ~22% pricier total — the largest premium of any flip, worth
+  revisiting if the reader disagrees once buying it as a physical copy (it's a
+  `shelf`/owned-and-read series; "recommended" there is a buy-this-print-set
+  call, not a reading-format one).
+- **Checked, left alone**: AoT's two editions differ by only 1.3% total — a
+  genuine wash, not worth flipping. `shelf` items generally show the owned
+  edition as "recommended" (Berserk, Gantz, Blame!, Akira) — that's a different
+  meaning ("what you own"), not a buying recommendation, so not part of this
+  audit. GITS deliberately keeps the pricier EN edition recommended over a
+  cheaper FR one specifically because the FR edition's uncensored status is
+  unverified — a documented, deliberate exception, not an oversight.
+- **Going forward:** when adding an edition with `recommended:true`, compute
+  `vols×price` for every edition in the entry, not just the per-volume price —
+  a 2-in-1/3-in-1 format can look pricier per volume while being cheaper in
+  total, which is exactly how Vagabond went unnoticed.
+
 **Edition-language preference: French first, then English, then other.** When
 adding a title, search all three and pick the best available in that order. Most
 of the catalog uses French editions; a few use English where no French edition
