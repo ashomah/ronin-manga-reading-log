@@ -153,7 +153,8 @@ One Piece (classic Glénat, 1 owned), Akira (large B&W, 6, read), Berserk
 (classic Glénat, 42 owned / 41 read), FMA (user was moving this to wishlist).
 
 Suggestions/wishlist: Dragon Ball Super, Naruto, Vagabond, Vinland Saga,
-Monster, Pluto, Biomega/NOiSE, Dorohedoro, Blade of the Immortal (L'Habitant de
+Monster, Pluto, Biomega, NOiSE (see the split note below — two separate,
+unconnected Nihei works), Dorohedoro, Blade of the Immortal (L'Habitant de
 l'infini), Neon Genesis Evangelion, L'Attaque des Titans, Death Note, Bonne nuit
 Punpun (Oyasumi Punpun), I Am a Hero, The Strange House (変な家, ongoing),
 Tract (Shintarō Kago), Yuuan no Kanata (Nokuto Koike), Baki (Keisuke Itagaki;
@@ -176,6 +177,19 @@ and Day of the Flying Head (all Hollow Press EN). Blurbs carry a "Kago pick #N"
 tag recording relative priority (1=Dementia 21 … 4=deep cuts). NOT added:
 "Heartbreak Reincarnation" — that's by a different Hollow Press artist, Daisuke
 Ichiba, not Kago; an earlier pass mis-attributed it.
+
+**Biomega/NOiSE split (2026-10-28):** these were wrongly combined into one
+`blameprequel` entry implying Biomega is a Blame! prequel too. Verified: only
+**NOiSE** (1 vol) is the actual Blame! prequel (set 3,000 years earlier);
+**Biomega** is a separate, unconnected Nihei work (he's compared his catalog to
+Final Fantasy games — shared style/motifs, not a shared timeline). Split into
+two entries. `blameprequel` **kept its id** (and so its existing `buy:true` +
+custom `img`) and now represents NOiSE specifically — the id name already
+matched that meaning. Biomega got a **new** id, `biomega`, starting fresh with
+no buy-list tick. Recommended editions for both are the current Glénat deluxe
+reissues (NOiSE as "Blame! Tome 0", €14.95; Biomega Deluxe 2-in-1, 3 vols,
+€14.95/vol) since they match the large format of the Blame! Master Edition the
+reader already owns.
 
 **Edition-language preference: French first, then English, then other.** When
 adding a title, search all three and pick the best available in that order. Most
